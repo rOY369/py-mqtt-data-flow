@@ -11,8 +11,9 @@ setup(
     url="https://github.com/rOY369/py-mqtt-data-flow",
     packages=find_packages(),
     install_requires=[
-        "paho-mqtt>=1.5.1",
+        "paho-mqtt==1.6.1",
         "PyYAML>=5.4",
+        "retry",
         # Add other dependencies as needed
     ],
     extras_require={

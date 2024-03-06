@@ -25,7 +25,7 @@ from unittest.mock import Mock
 import logging
 
 
-class MqttCustom:
+class MQTTClient:
     """
     The main interface and entry point for instantiating the custom
     mqtt client object.
@@ -120,61 +120,46 @@ class MqttCustom:
                         }
                     }
         """
-        credentials = {} if credentials is None else credentials
+        credentials = credentials or {}
         self.userdata = userdata
-        self.clientId = credentials.get("mqttclientid", None)
-        self.log = logging.getLogger("mqtt_lib_{}".format(self.clientId))
+        self.client_id = credentials.get("mqttclientid")
+        self.log = logging.getLogger(f"mqtt_lib_{self.client_id}")
         self.log.setLevel(log_level)
         self.server = credentials.get("mqttserver", "127.0.0.1")
         self.port = credentials.get("mqttport", 1883)
-
-        # in seconds
-        self.maxMqttReconnectDelay = credentials.get("mqttreconnectdelay", 8)
-
-        self.willSetTopic = credentials.get("willsettopic", "")
-        self.willSetPayload = credentials.get("willsetpayload", "")
+        self.max_reconnect_delay = credentials.get("mqttreconnectdelay", 8)
+        self.will_topic = credentials.get("willsettopic", "")
+        self.will_payload = credentials.get("willsetpayload", "")
         self.keepalive = credentials.get("mqttkeepalive", 60)
         self.certs = credentials.get("certs", None)
-        self.queueSize = credentials.get("queuesize", 5)
-        self.batchSize = credentials.get("batchsize", 5)
-        self.publishInterval = credentials.get("publishinterval", 60)
+        self.queue_size = credentials.get("queuesize", 5)
+        self.batch_size = credentials.get("batchsize", 5)
+        self.publish_interval = credentials.get("publishinterval", 60)
         self.on_connect = on_connect
         self.on_message = on_message
         self.on_disconnect = on_disconnect
-
         self.batches = {}
-        self.queue = Queue(maxsize=self.queueSize)
+        self.queue = Queue(maxsize=self.queue_size)
         self._batch_lock = threading.Lock()
         self.started = False
 
     def _publish_after_interval(self):
-        """
-        Publishes from queue and batch after every
-        interval of `publishinterval` seconds.
-        """
+        """Publishes from queue and batch at fixed intervals."""
         while self.started:
-            self.log.debug("mqtt_publish_interval")
-
+            self.log.debug("Publishing at interval")
             self._publish_queue()
             self._publish_batches()
-
-            time.sleep(self.publishInterval)
+            time.sleep(self.publish_interval)
 
     def _publish_queue(self):
-        """
-        Publishes all pending items from queue.
-        """
-        currentQueueSize = self.queue.qsize()
-
-        messages = [self.queue.get() for _ in range(currentQueueSize)]
-
+        """Publishes all pending items from the queue."""
+        current_queue_size = self.queue.qsize()
+        messages = [self.queue.get() for _ in range(current_queue_size)]
         for topic, payload in messages:
             self.publish(topic, payload)
 
     def _publish_batches(self):
-        """
-        Publishes all pending batches.
-        """
+        """Publishes all pending batches."""
         with self._batch_lock:
             for topic, batch in self.batches.items():
                 if batch:
@@ -182,27 +167,18 @@ class MqttCustom:
                     self.batches[topic] = []
 
     def start(self):
-        """
-        After instantiation, the user needs to call this method to
-        initiate the mqtt connection for communication. This initiates
-        the connection and keeps it persistent.
-        From this moment, the user can publish or subsribe.
-        """
+        """Starts the MQTT client connection and background tasks."""
         self.started = True
         threading.Thread(target=self._mqtt_worker).start()
-        time.sleep(1)
+        time.sleep(1)  # Wait for the connection to establish
         threading.Thread(target=self._publish_after_interval).start()
 
     def stop(self):
-        """
-        Disconnects mqtt client if exists.
-        Stops fixed interval publishing from queue and batch after
-        publishing pending items.
-        """
+        """Stops the MQTT client and finalizes publishing."""
         if hasattr(self, "client"):
             self._publish_batches()
             self._publish_queue()
-            self.log.info("Disconnecting mqtt client")
+            self.log.info("Disconnecting MQTT client")
             self.client.disconnect()
             self.started = False
 
@@ -213,209 +189,150 @@ class MqttCustom:
         backoff=2,
     )
     def _retry_connection(self):
-        """
-        This function (_retry_connection) keeps retrying to connect the client
-        until the connection has been successfully established with the help of
-        retry decorator. This reconnect is only used for the first time
-        successful connection. After an initial connection has been established,
-        the internal implementation of mqtt protocol itself makes sure that the
-        client reconnects.Between each attempt it will wait a number of seconds
-        between 1 and mqttreconnectdelay. Initially the reconnection attempt is
-        delayed of 1 second. It's doubled between subsequent attempt up to max_delay.
-
-        Exceptions:
-            ConnectionRefusedError: If not able to reconnect
-            OSError: If not able to reconnect here the with the retry
-                    decorator below parameters are used
-
-        Args(for decorator):
-            Exception: an exception or a tuple of exceptions to catch. default:Exceptions
-            tries: the maximum number of attempts. default: -1 (infinite).
-            delay: initial delay between attempts. default: is 0 but we have used 1
-            max_delay: the maximum value of delay. default: None and we have used 256.
-            backoff: multiplier applied to delay between attempts. default is 1
-                (no backoff) but we use 2. So basically it doubles between
-                subsequent attempt up to max_delay.
-        """
+        """Retries MQTT connection with exponential backoff."""
         if self.started:
-            self.log.info(f"mqtt_retry server={self.server} port={self.port}")
-
+            self.log.info(
+                f"Retrying MQTT connection to {self.server}:{self.port}"
+            )
             self.client.reconnect()
 
-    def _ssl_alpn(self, protocolName, ca, cert, key):
-        """
-        This method sets up ssl context with alpn in order to connect
-        to aws iot. This ssl context is later attached to mqtt client.
-        Args:
-            protocolName (str): protocol name to set alpn. For aws
-                iot broker this is fixed as `x-amzn-mqtt-ca`.
-            ca (str): ca file path.
-            cert (str): cert file path
-            key (str): key file path
-        Returns:
-            sslContext
-        """
-
-        sslContext = ssl.create_default_context()
-        sslContext.set_alpn_protocols([protocolName])
-        sslContext.load_verify_locations(cafile=ca)
-        sslContext.load_cert_chain(certfile=cert, keyfile=key)
-
-        return sslContext
+    def _ssl_alpn(self, protocol_name, ca, cert, key):
+        """Sets up SSL context with ALPN for AWS IoT connection."""
+        ssl_context = ssl.create_default_context()
+        ssl_context.set_alpn_protocols([protocol_name])
+        ssl_context.load_verify_locations(cafile=ca)
+        ssl_context.load_cert_chain(certfile=cert, keyfile=key)
+        return ssl_context
 
     def _mqtt_worker(self):
-        """
-        This creates the raw/standard mqtt client and configures it
-        according to the parameters passed in the credentials by the
-        user.
-        After creating the client, it connects the client to the
-        broker and keeps that connection persistent forever.
-        The client will handle reconnection automatically.
-        The callbacks will also be triggered automatically.
-        Catches:
-            ConnectionRefusedError: If not able to connect for the
-                first time.
-            OSError: If not able to connect for the first time.
-        """
-
+        """Configures and starts the MQTT client."""
         self.client = mqtt.Client(
-            client_id=self.clientId, userdata=self.userdata
+            client_id=self.client_id, userdata=self.userdata
         )
-
         if self.certs:
-            iotProtocolName = self.certs["iotProtocolName"]
-            ca = self.certs["ca"]
-            cert = self.certs["cert"]
-            key = self.certs["key"]
-            self.client.tls_set_context(
-                context=self._ssl_alpn(iotProtocolName, ca, cert, key)
+            ssl_context = self._ssl_alpn(
+                self.certs["iotProtocolName"],
+                self.certs["ca"],
+                self.certs["cert"],
+                self.certs["key"],
             )
-
-        if self.willSetTopic and self.willSetPayload:
-            self.client.will_set(self.willSetTopic, self.willSetPayload)
+            self.client.tls_set_context(context=ssl_context)
+        if self.will_topic and self.will_payload:
+            self.client.will_set(self.will_topic, self.will_payload)
         self.client.reconnect_delay_set(
-            min_delay=1, max_delay=self.maxMqttReconnectDelay
+            min_delay=1, max_delay=self.max_reconnect_delay
         )
         self.client.on_connect = self.on_connect
-        self.client.on_disconnect = self.on_disconnect
         self.client.on_message = self.on_message
-
+        self.client.on_disconnect = self.on_disconnect
         try:
             self.client.connect(self.server, self.port, self.keepalive)
         except (ConnectionRefusedError, OSError):
             self._retry_connection()
-
         self.client.loop_start()
 
-    def subscribe_topics(self, topicsToSubscribe):
+    def subscribe_topics(self, topics):
         """
-        Subscribes to topics.
+        Subscribes the client to a list of topics.
+
         Args:
-            topicsToSubscribe (str/list[str]) : A single topic string
-                or a list of multiple topic strings.
+            topics (str or list of str): Topic or topics to subscribe to.
         """
         if not hasattr(self, "client"):
-            return None
+            self.log.warning("MQTT client not initialized.")
+            return
 
-        if isinstance(topicsToSubscribe, list):
-            for topic in topicsToSubscribe:
-                self.client.subscribe(topic)
-        elif isinstance(topicsToSubscribe, str):
-            self.client.subscribe(topicsToSubscribe)
+        if isinstance(topics, str):
+            topics = [topics]
+
+        for topic in topics:
+            self.client.subscribe(topic)
 
     def publish(self, topic, payload):
         """
-        Publishes message immediately.
+        Publishes a message immediately to the specified topic.
 
         Args:
-            topic (str): The topic string.
-            payload (str/int/float): The payload to be published.
+            topic (str): Topic where the message will be published.
+            payload (str, int, float): Payload of the message.
         """
         if not hasattr(self, "client"):
-            return None
+            self.log.warning("MQTT client not initialized.")
+            return
 
         try:
-            mqttMessageInfo = self.client.publish(topic, payload)
-            return mqttMessageInfo
-        except OSError:
-            self.log.warning(
-                f"message_publish_error topic={topic}, payload={payload}"
-            )
+            message_info = self.client.publish(topic, payload)
+            return message_info
+        except OSError as e:
+            self.log.warning(f"Failed to publish message: {e}")
             return None
 
     def qpublish(self, topic, payload):
         """
-        Adds msg into queue. If queue size reaches limit, items are
-        published individually.
+        Queues a message for publishing. If the queue reaches its size limit,
+        messages are published immediately.
 
         Args:
-            topic (str): The topic string.
-            payload (str/int/float): The payload to be published.
+            topic (str): Topic where the message will be published.
+            payload (str, int, float): Payload of the message.
         """
-        self.log.debug("qpublish_entry")
+        self.log.debug("Queueing message for publishing.")
         self.queue.put((topic, payload))
 
-        if self.queue.qsize() >= self.queueSize:
-            messages = [self.queue.get() for _ in range(self.queueSize)]
-            self.log.debug("mqtt_publish_qsize")
-
-            for topic, payload in messages:
-                self.publish(topic, payload)
+        if self.queue.qsize() >= self.queue_size:
+            self.log.debug("Queue size limit reached, publishing messages.")
+            self._publish_queue()
 
     def batch_publish(self, topic, payload):
         """
-        Appends msg into batch corresponding to topic.
-        If batch size reaches size limit, then that batch is published.
+        Adds a message to a batch for a specific topic. When the batch reaches
+        its size limit, it is published as a single payload.
+
+        Args:
+            topic (str): Topic for the batch.
+            payload (str, int, float): Payload to add to the batch.
         """
         with self._batch_lock:
-            self.log.debug("batch_publish_entry")
-
             if topic not in self.batches:
                 self.batches[topic] = []
 
-            batch = self.batches[topic]
-            batch.append(payload)
+            self.batches[topic].append(payload)
 
-            if len(batch) >= self.batchSize:
-                self.log.debug("mqtt_publish_batch_size")
-                self.publish(topic, json.dumps(batch))
+            if len(self.batches[topic]) >= self.batch_size:
+                self.log.debug("Batch size limit reached, publishing batch.")
+                self.publish(topic, json.dumps(self.batches[topic]))
                 self.batches[topic] = []
 
     def publish_high_priority(self, topic, payload, hostname=None, port=None):
         """
-        User can simply publish a message without creating a
-        persistent client.
-        Args:
-            topic (str): The topic string.
-            payload (str/int/float): The payload to be published.
-            hostname (str): The hostname or IP address of the broker. If not
-                passed, same server will be used which was passed in
-                the constructure.
-            port (int): Network port of the server host to connect to. If not
-                passed, same server will be used which was passed in
-                the constructure.
-        """
+        Publishes a high-priority message without using the persistent client.
+        This can be used for immediate, one-off messages.
 
+        Args:
+            topic (str): Topic for the message.
+            payload (str, int, float): Message payload.
+            hostname (str, optional): Hostname of the broker (overrides default).
+            port (int, optional): Broker's port (overrides default).
+        """
         hostname = hostname or self.server
         port = port or self.port
 
         try:
-            mqttMessageInfo = publish_single.single(
+            message_info = publish_single.single(
                 topic, payload, hostname=hostname, port=port, keepalive=2
             )
-            return mqttMessageInfo
-        except OSError:
-            self.log.warning(
-                f"message_publish_error topic={topic}, payload={payload}"
-            )
+            return message_info
+        except OSError as e:
+            self.log.warning(f"Failed to publish high-priority message: {e}")
             return None
 
     def is_connected(self):
         """
-        Returns:
-            bool: True means mqtt client connected. False means not connected.
-        """
+        Checks if the MQTT client is currently connected to the broker.
 
+        Returns:
+            bool: True if the client is connected, False otherwise.
+        """
         if hasattr(self, "client"):
             return self.client.is_connected()
         else:

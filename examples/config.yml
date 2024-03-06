@@ -1,14 +1,9 @@
 # MQTT Clients Configuration
 # Define all MQTT clients along with the topics they subscribe to.
 mqtt_clients:
-  - client_id: 'client1'
-    broker_url: 'mqtt://example.com'
-    port: 1883
-    topics:
-      - name: '/sensors/temperature'
-        qos: 1
-      - name: '/sensors/humidity'
-        qos: 1
+  - mqttclientid: 'client1'
+    mqttserver: '127.0.0.1'
+    mqttport: 1883
 
 # Callbacks Definition
 # Centralized section for defining callback functions for both simple and complex processing.
