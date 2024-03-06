@@ -1,0 +1,73 @@
+# MQTT Clients Configuration
+# Define all MQTT clients along with the topics they subscribe to.
+mqtt_clients:
+  - client_id: 'client1'
+    broker_url: 'mqtt://example.com'
+    port: 1883
+    topics:
+      - name: '/sensors/temperature'
+        qos: 1
+      - name: '/sensors/humidity'
+        qos: 1
+
+# Callbacks Definition
+# Centralized section for defining callback functions for both simple and complex processing.
+callbacks:
+  handle_temperature_alert:
+    module: 'temperature_alerts.py'
+    function: 'alert_if_high'
+  handle_humidity_analysis:
+    module: 'humidity_analysis.py'
+    function: 'analyze_humidity'
+  sample_temperature_collection:
+    module: 'sampler_processor.py'
+    function: 'handle_temperature_sample'
+  process_sampled_temperature:
+    module: 'temperature_processor.py'
+    function: 'handle_processed_temperature'
+
+# Rules Configuration
+# Rules can specify a direct callback for simple tasks or an action referring to a processing chain.
+rules:
+  # Simple callback rule for temperature alerts
+  - rule: 'simple_temperature_alert'
+    source_client_id: 'client1'
+    topic: '/sensors/temperature'
+    callback: 'handle_temperature_alert'
+    execution_mode: 'sequential'
+
+  # Simple callback rule for humidity analysis
+  - rule: 'simple_humidity_analysis'
+    source_client_id: 'client1'
+    topic: '/sensors/humidity'
+    callback: 'handle_humidity_analysis'
+    execution_mode: 'sequential'
+
+  # Complex processing chain for temperature data sampling and processing
+  - rule: 'temperature_sampling_and_processing'
+    source_client_id: 'client1'
+    topic: '/sensors/temperature'
+    action: 'temperature_sampling_and_processing_chain'
+    execution_mode: 'threaded'
+
+# Processing Chains Configuration
+# Defines the sequence of processing steps for complex scenarios.
+processing_chains:
+  temperature_sampling_and_processing_chain:
+    # Sampler step: collects messages over a specified duration.
+    - step: 'sampler'
+      config:
+        duration: 60 # in seconds
+        callback: 'sample_temperature_collection'
+
+    # Custom processor step: processes the sampled data.
+    - step: 'custom_processor'
+      config:
+        callback: 'process_sampled_temperature'
+
+    # Relay step: demonstrates using a predefined processor to relay messages.
+    # This step is configurable to relay messages to another MQTT topic or client.
+    - step: 'relay'
+      config:
+        target_client_id: 'client2'
+        target_topic: '/processed/temperature'
