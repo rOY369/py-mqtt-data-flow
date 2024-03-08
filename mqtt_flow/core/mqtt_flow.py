@@ -3,14 +3,14 @@ from mqtt_flow.config.loader import load_config
 
 
 class MQTTFlow:
-    def __init__(self, config_path=None):
-        self.config_path = config_path or self._find_default_config()
-        self.config = load_config(config_path)
-        self.clients = self._create_mqtt_clients()
+    def __init__(self, config):
+        self.config = config
+        self._create_mqtt_clients()
 
     def _create_mqtt_clients(self):
         """Create MQTT client instances based on the loaded configuration."""
         clients = {}
+        # TODO : add uniqueness to client id
         for client_config in self.config.get("mqtt_clients", []):
             client_id = client_config.get("mqttclientid")
 
@@ -18,7 +18,7 @@ class MQTTFlow:
                 raise ValueError(
                     "Missing 'mqttclientid' in MQTT client configuration"
                 )
-            
+
             if client_id in clients:
                 raise ValueError(
                     f"Duplicate MQTT client ID found: {client_id}"

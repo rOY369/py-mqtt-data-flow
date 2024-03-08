@@ -1,9 +1,9 @@
 # MQTT Clients Configuration
 # Define all MQTT clients along with the topics they subscribe to.
 mqtt_clients:
-  - mqttclientid: 'client1'
-    mqttserver: '127.0.0.1'
-    mqttport: 1883
+  - client_name: 'client1'
+    server: '127.0.0.1'
+    port: 1883
 
 # Callbacks Definition
 # Centralized section for defining callback functions for both simple and complex processing.

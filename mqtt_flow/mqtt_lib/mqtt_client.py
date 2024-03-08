@@ -20,9 +20,9 @@ from retry import retry
 import threading
 from queue import Queue
 import json
-import logging
 from unittest.mock import Mock
-import logging
+
+from mqtt_flow.utils.helpers import get_logger
 
 
 class MQTTClient:
@@ -76,12 +76,21 @@ class MQTTClient:
 
     def __init__(
         self,
+        client_id=None,
+        server="127.0.0.1",
+        port=1883,
+        max_reconnect_delay=8,
+        will_set_topic=None,
+        will_set_payload=None,
+        keep_alive=60,
+        queue_size=5,
+        batch_size=5,
+        publish_interval=60,
+        ssl_config=None,
+        userdata=None,
         on_connect=Mock(),
         on_message=Mock(),
         on_disconnect=Mock(),
-        credentials=None,
-        userdata=None,
-        log_level=logging.INFO,
     ):
         """
         Sets up the parameters required to setup the mqtt client. It
@@ -120,21 +129,19 @@ class MQTTClient:
                         }
                     }
         """
-        credentials = credentials or {}
         self.userdata = userdata
-        self.client_id = credentials.get("mqttclientid")
-        self.log = logging.getLogger(f"mqtt_lib_{self.client_id}")
-        self.log.setLevel(log_level)
-        self.server = credentials.get("mqttserver", "127.0.0.1")
-        self.port = credentials.get("mqttport", 1883)
-        self.max_reconnect_delay = credentials.get("mqttreconnectdelay", 8)
-        self.will_topic = credentials.get("willsettopic", "")
-        self.will_payload = credentials.get("willsetpayload", "")
-        self.keepalive = credentials.get("mqttkeepalive", 60)
-        self.certs = credentials.get("certs", None)
-        self.queue_size = credentials.get("queuesize", 5)
-        self.batch_size = credentials.get("batchsize", 5)
-        self.publish_interval = credentials.get("publishinterval", 60)
+        self.client_id = client_id
+        self.log = get_logger(f"mqtt_client_{client_id}")
+        self.server = server
+        self.port = port
+        self.max_reconnect_delay = max_reconnect_delay
+        self.will_topic = will_set_topic
+        self.will_payload = will_set_payload
+        self.keepalive = keep_alive
+        self.ssl_config = ssl_config
+        self.queue_size = queue_size
+        self.batch_size = batch_size
+        self.publish_interval = publish_interval
         self.on_connect = on_connect
         self.on_message = on_message
         self.on_disconnect = on_disconnect
@@ -196,12 +203,17 @@ class MQTTClient:
             )
             self.client.reconnect()
 
-    def _ssl_alpn(self, protocol_name, ca, cert, key):
+    def _ssl_alpn(self, alpn_protocol, ca, cert, key):
         """Sets up SSL context with ALPN for AWS IoT connection."""
         ssl_context = ssl.create_default_context()
-        ssl_context.set_alpn_protocols([protocol_name])
-        ssl_context.load_verify_locations(cafile=ca)
-        ssl_context.load_cert_chain(certfile=cert, keyfile=key)
+        if alpn_protocol:
+            ssl_context.set_alpn_protocols([alpn_protocol])
+
+        if ca:
+            ssl_context.load_verify_locations(cafile=ca)
+
+        if cert and key:
+            ssl_context.load_cert_chain(certfile=cert, keyfile=key)
         return ssl_context
 
     def _mqtt_worker(self):
@@ -209,12 +221,12 @@ class MQTTClient:
         self.client = mqtt.Client(
             client_id=self.client_id, userdata=self.userdata
         )
-        if self.certs:
-            ssl_context = self._ssl_alpn(
-                self.certs["iotProtocolName"],
-                self.certs["ca"],
-                self.certs["cert"],
-                self.certs["key"],
+        if self.ssl_config:
+            ssl_context = self._prepare_ssl_context(
+                self.ssl_config.get("alpn_protocol"),
+                self.ssl_config.get("ca"),
+                self.ssl_config.get("cert"),
+                self.ssl_config.get("key"),
             )
             self.client.tls_set_context(context=ssl_context)
         if self.will_topic and self.will_payload:
