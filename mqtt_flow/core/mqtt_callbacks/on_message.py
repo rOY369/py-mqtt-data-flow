@@ -32,4 +32,14 @@ class OnMessageCallback:
                 f"MQTT client {client._client_id} received message on topic {topic} with payload {payload}"
             )
 
+            message = {
+                "topic": topic,
+                "payload": payload,
+                "userdata": userdata,
+            }
+
+            userdata["_clients_queues"][userdata["_client_name"]][
+                "incoming"
+            ].put(message)
+
         return on_message

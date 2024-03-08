@@ -8,6 +8,12 @@ mqtt_clients:
     sub_topics:
       - test/topic
 
+queues:
+  - name: 'client1_queue'
+    size: 5
+  - name: 'client2_queue'
+    size: 10
+
 # Callbacks Definition
 # Centralized section for defining callback functions for both simple and complex processing.
 callbacks:
@@ -27,26 +33,30 @@ callbacks:
 # Rules Configuration
 # Rules can specify a direct callback for simple tasks or an action referring to a processing chain.
 rules:
-  # Simple callback rule for temperature alerts
-  - rule: 'simple_temperature_alert'
-    source_client_id: 'client1'
-    topic: '/sensors/temperature'
-    callback: 'handle_temperature_alert'
-    execution_mode: 'sequential'
+  - name: 'simple_rule'
+    source_client_name: 'client1'
+    topic: 'test/topic'
+    task: 'task.Task'
+  # # Simple callback rule for temperature alerts
+  # - rule: 'simple_temperature_alert'
+  #   source_client_id: 'client1'
+  #   topic: '/sensors/temperature'
+  #   callback: 'handle_temperature_alert'
+  #   execution_mode: 'sequential'
 
-  # Simple callback rule for humidity analysis
-  - rule: 'simple_humidity_analysis'
-    source_client_id: 'client1'
-    topic: '/sensors/humidity'
-    callback: 'handle_humidity_analysis'
-    execution_mode: 'sequential'
+  # # Simple callback rule for humidity analysis
+  # - rule: 'simple_humidity_analysis'
+  #   source_client_id: 'client1'
+  #   topic: '/sensors/humidity'
+  #   callback: 'handle_humidity_analysis'
+  #   execution_mode: 'sequential'
 
-  # Complex processing chain for temperature data sampling and processing
-  - rule: 'temperature_sampling_and_processing'
-    source_client_id: 'client1'
-    topic: '/sensors/temperature'
-    action: 'temperature_sampling_and_processing_chain'
-    execution_mode: 'threaded'
+  # # Complex processing chain for temperature data sampling and processing
+  # - rule: 'temperature_sampling_and_processing'
+  #   source_client_id: 'client1'
+  #   topic: '/sensors/temperature'
+  #   action: 'temperature_sampling_and_processing_chain'
+  #   execution_mode: 'threaded'
 
 # Processing Chains Configuration
 # Defines the sequence of processing steps for complex scenarios.

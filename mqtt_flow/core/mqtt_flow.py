@@ -1,15 +1,66 @@
 from mqtt_flow.mqtt_lib.mqtt_client import MQTTClient
+from mqtt_flow.core.mqtt_rule import MQTTRule
 from mqtt_flow.core.mqtt_callbacks import (
     OnConnectCallback,
     OnMessageCallback,
     OnDisconnectCallback,
 )
+import queue
+import threading
+from mqtt_flow.utils.helpers import get_logger
+
+logger = get_logger("mqtt_flow")
 
 
 class MQTTFlow:
     def __init__(self, config):
         self.config = config
+        self._clients_queues = self._create_mqtt_clients_queues()
+        self._tasks_queues = self._create_tasks_queues()
+        self._rules = self._create_rules()
+        self._register_clients_base_userdata()
         self._clients = self._create_mqtt_clients()
+
+    def _create_rules(self):
+        rules = {}
+        for rule_config in self.config.get("rules", []):
+            rule_name = rule_config.get("name")
+            source_client_name = rule_config.get("source_client_name")
+
+            if source_client_name not in rules:
+                rules[source_client_name] = {}
+            rules[source_client_name][rule_name] = MQTTRule(rule_config)
+        return rules
+
+    def _register_clients_base_userdata(self):
+        for client_config in self.config.get("mqtt_clients", []):
+
+            client_name = client_config.get("client_name")
+            if "userdata" not in client_config:
+                client_config["userdata"] = {}
+
+            client_config["userdata"]["_client_name"] = client_name
+            client_config["userdata"]["_rules"] = self._rules
+            client_config["userdata"]["_tasks_queues"] = self._tasks_queues
+            client_config["userdata"]["_clients_queues"] = self._clients_queues
+
+    def _create_mqtt_clients_queues(self):
+        queues = {}
+        for client_config in self.config.get("mqtt_clients", []):
+            client_name = client_config.get("client_name")
+            queues[client_name] = {
+                "incoming": queue.Queue(),
+                "outgoing": queue.Queue(),
+            }
+        return queues
+
+    def _create_tasks_queues(self):
+        queues = {}
+        for queue_config in self.config.get("queues", []):
+            queue_name = queue_config.get("name")
+            queue_size = queue_config.get("size")
+            queues[queue_name] = queue.Queue(queue_size)
+        return queues
 
     def _create_mqtt_client(self, client_config):
         """Create MQTT client instance based on the loaded configuration."""
@@ -64,12 +115,44 @@ class MQTTFlow:
         """Get an MQTT client instance by name."""
         return self._clients.get(client_name)
 
-    def start_all_clients(self):
+    def _incoming_msg_queue_consumer(self, client_name):
+        incoming_queue = self._clients_queues[client_name]["incoming"]
+
+        while True:
+            message = incoming_queue.get()
+            logger.info(
+                f"MQTT client {client_name} received message: {message['topic']} -> {message['payload']}"
+            )
+
+            for rule_name, rule in self._rules.get(client_name, {}).items():
+                if rule.is_rule_matched(message):
+                    # TODO put task in queue
+                    logger.info(f"Rule {rule_name} matched for {client_name} ")
+
+    def _outgoing_msg_queue_consumer(self, client_name):
+        outgoing_queue = self._clients_queues[client_name]["outgoing"]
+        client = self._clients[client_name]
+
+        while True:
+            message = outgoing_queue.get()
+            client.publish(message["topic"], message["payload"])
+
+    def start(self):
         """Start all MQTT client connections."""
         for client in self._clients.values():
             client.start()
 
-    def stop_all_clients(self):
+        for client_name in self._clients_queues.keys():
+            threading.Thread(
+                target=self._incoming_msg_queue_consumer,
+                args=(client_name,),
+            ).start()
+            threading.Thread(
+                target=self._outgoing_msg_queue_consumer,
+                args=(client_name,),
+            ).start()
+
+    def stop(self):
         """Stop all MQTT client connections."""
         for client in self._clients.values():
             client.stop()

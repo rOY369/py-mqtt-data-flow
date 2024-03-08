@@ -67,10 +67,12 @@ class MQTTConfigLoader:
             if client_config.get("client_name") == client_name:
                 client_config.get("sub_topics", []).extend(topics)
 
-    def register_userdata(self, client_name, userdata):
+    def register_userdata(self, client_name, userdata_key, userdata_value):
         for client_config in self.config.get("mqtt_clients", []):
             if client_config.get("client_name") == client_name:
-                client_config["userdata"] = userdata
+                if "userdata" not in client_config:
+                    client_config["userdata"] = {}
+                client_config["userdata"][userdata_key] = userdata_value
 
     def _find_config_file(self, default_file=DEFAULT_CONFIG_FILE_NAME):
         # Determine the project directory (assuming the current working directory)
