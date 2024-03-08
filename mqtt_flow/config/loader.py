@@ -3,7 +3,8 @@ from pathlib import Path
 import yaml
 import uuid
 
-class ConfigLoader:
+
+class MQTTConfigLoader:
     DEFAULT_CONFIG_FILE_NAME = "mqtt_conf.yml"
 
     def __init__(
@@ -15,6 +16,10 @@ class ConfigLoader:
     ):
         self.config = self._load_raw_config(config_path)
 
+        # TODO : add validator
+        for client_config in self.config.get("mqtt_clients", []):
+            client_config["client_id"] = client_config["client_name"]
+
         if client_id_suffix:
             for client_name, suffix in client_id_suffix.items():
                 self.add_suffix_to_client_id(client_name, suffix)
@@ -24,6 +29,8 @@ class ConfigLoader:
         if sub_topics:
             for client_name, sub_topics in sub_topics.items():
                 self.register_sub_topics(client_name, sub_topics)
+
+        self.make_client_id_unique()
 
     @classmethod
     def get_config(
@@ -40,13 +47,13 @@ class ConfigLoader:
             sub_topics=sub_topics,
         )
 
-        loader.make_client_id_unique()
-
         return loader.config
 
     def make_client_id_unique(self):
         for client_config in self.config.get("mqtt_clients", []):
-            client_config["client_id"] = f"{client_config['client_id']}_{str(uuid.uuid4()).split("-")[0]}"
+            client_config["client_id"] = (
+                f"{client_config['client_id']}_{str(uuid.uuid4()).split('-')[0]}"
+            )
 
     def add_suffix_to_client_id(self, client_name, suffix):
         for client_config in self.config.get("mqtt_clients", []):
@@ -55,10 +62,10 @@ class ConfigLoader:
                     f"{client_config['client_name']}_{suffix}"
                 )
 
-    def register_sub_topics(self, client_name, topics):
+    def append_sub_topics(self, client_name, topics):
         for client_config in self.config.get("mqtt_clients", []):
             if client_config.get("client_name") == client_name:
-                client_config["sub_topics"] = topics
+                client_config.get("sub_topics", []).extend(topics)
 
     def register_userdata(self, client_name, userdata):
         for client_config in self.config.get("mqtt_clients", []):

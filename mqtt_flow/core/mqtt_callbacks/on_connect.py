@@ -14,7 +14,7 @@ class OnConnectCallback:
         self.sub_topics = sub_topics
 
     @classmethod
-    def get_callback(cls, sub_topics):
+    def get_callback(cls, sub_topics=None):
         """
         Returns the actual on_connect callback function configured with the provided subscription topics.
         Args:
@@ -22,6 +22,9 @@ class OnConnectCallback:
         Returns:
             function: The configured on_connect callback function.
         """
+        if sub_topics is None:
+            sub_topics = []
+
         instance = cls(sub_topics)
 
         def on_connect(client, userdata, flags, rc):
@@ -36,7 +39,7 @@ class OnConnectCallback:
             logger.info(
                 f"MQTT client {client._client_id} connected with result code {rc}"
             )
-            for topic, qos in instance.sub_topics:
-                client.subscribe(topic, qos)
+            for topic in instance.sub_topics:
+                client.subscribe(topic)
 
         return on_connect
