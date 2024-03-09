@@ -3,12 +3,12 @@
 mqtt_clients:
   - client_name: 'client1'
     sub_topics:
-      - test/topic
+      - test/topic1
   - client_name: 'client2'
     sub_topics:
-      - test/topic
+      - test/topic2
 
-queues:
+tasks_queues:
   - name: 'client1_queue'
     size: 5
   - name: 'client2_queue'
@@ -33,10 +33,19 @@ callbacks:
 # Rules Configuration
 # Rules can specify a direct callback for simple tasks or an action referring to a processing chain.
 rules:
-  - name: 'simple_rule'
+  - name: 'simple_rule1'
     source_client_name: 'client1'
-    topic: 'test/topic'
-    task: 'task.Task'
+    topic: 'test/topic1'
+    task:
+      path: 'task.Task'
+      queue_name: client1_queue
+  - name: 'simple_rule2'
+    source_client_name: 'client2'
+    topic: 'test/topic2'
+    task:
+      path: 'task.Task'
+      queue_name: client2_queue
+
   # # Simple callback rule for temperature alerts
   # - rule: 'simple_temperature_alert'
   #   source_client_id: 'client1'

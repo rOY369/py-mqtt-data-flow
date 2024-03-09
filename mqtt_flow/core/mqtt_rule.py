@@ -18,11 +18,11 @@ class MQTTRule:
         self.regex = rule_config.get("regex")
         self.topic = rule_config.get("topic")
         self.condition = rule_config.get("condition")
-        self.task_path = rule_config.get("task")
-        self.queue_name = rule_config.get("queue_name")
-        self.task_class = self._load_task_class(self.task_path)
+        self.task_config = rule_config.get("task")
+        self.queue_name = self.task_config.get("queue_name")
+        self.task_class = self._load_task_class(self.task_config)
 
-    def _load_task_class(self, task_path):
+    def _load_task_class(self, task_config):
         """
         Dynamically loads the Task class from the given path.
 
@@ -32,17 +32,21 @@ class MQTTRule:
         Returns:
             class: The Task class.
         """
-        module_name, class_name = task_path.rsplit(".", 1)
-        module = importlib.import_module(module_name)
+        task_path = task_config.get("path")
+        if task_path:
+            module_name, class_name = task_path.rsplit(".", 1)
+            module = importlib.import_module(module_name)
 
-        try:
-            class_ = getattr(module, class_name)
-        except AttributeError:
-            raise ValueError(
-                f"Task class {class_name} not found in module {module_name}"
-            )
+            try:
+                class_ = getattr(module, class_name)
+            except AttributeError:
+                raise ValueError(
+                    f"Task class {class_name} not found in module {module_name}"
+                )
 
-        return class_
+            return class_
+
+        return None
 
     def is_rule_matched(self, message):
         """

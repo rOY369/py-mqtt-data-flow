@@ -5,6 +5,7 @@ from mqtt_flow.core.mqtt_callbacks import (
     OnMessageCallback,
     OnDisconnectCallback,
 )
+from mqtt_flow.core.tasks_executor import TasksExecutor
 import queue
 import threading
 from mqtt_flow.utils.helpers import get_logger
@@ -20,6 +21,9 @@ class MQTTFlow:
         self._rules = self._create_rules()
         self._register_clients_base_userdata()
         self._clients = self._create_mqtt_clients()
+        self._tasks_executor = TasksExecutor(
+            self._tasks_queues, self.config.copy().get("tasks_queues")
+        )
 
     def _create_rules(self):
         rules = {}
@@ -56,7 +60,7 @@ class MQTTFlow:
 
     def _create_tasks_queues(self):
         queues = {}
-        for queue_config in self.config.get("queues", []):
+        for queue_config in self.config.get("tasks_queues", []):
             queue_name = queue_config.get("name")
             queue_size = queue_config.get("size")
             queues[queue_name] = queue.Queue(queue_size)
@@ -127,7 +131,12 @@ class MQTTFlow:
             for rule_name, rule in self._rules.get(client_name, {}).items():
                 if rule.is_rule_matched(message):
                     # TODO put task in queue
-                    logger.info(f"Rule {rule_name} matched for {client_name} ")
+                    logger.info(f"Rule {rule_name} matched for {client_name}")
+                    task_class = rule.task_class
+
+                    if task_class:
+                        task = task_class(message, rule.task_config)
+                        self._tasks_queues[rule.queue_name].put(task)
 
     def _outgoing_msg_queue_consumer(self, client_name):
         outgoing_queue = self._clients_queues[client_name]["outgoing"]
@@ -151,6 +160,8 @@ class MQTTFlow:
                 target=self._outgoing_msg_queue_consumer,
                 args=(client_name,),
             ).start()
+
+        self._tasks_executor.start()
 
     def stop(self):
         """Stop all MQTT client connections."""
