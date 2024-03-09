@@ -11,8 +11,18 @@ mqtt_clients:
 tasks_queues:
   - name: 'client1_queue'
     size: 5
+    pool: 'pool1'
   - name: 'client2_queue'
     size: 10
+    pool: 'pool2'
+
+pools:
+  - name: 'pool1'
+    max_workers: 5
+    type: 'simple_thread'
+  - name: pool2
+    max_workers: 10
+    type: 'sequential'
 
 # Callbacks Definition
 # Centralized section for defining callback functions for both simple and complex processing.

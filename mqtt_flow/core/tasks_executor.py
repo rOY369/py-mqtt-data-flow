@@ -1,21 +1,49 @@
 import threading
+from mqtt_flow.core.executor_pools import (
+    SimpleThreadPool,
+    ThreadPool,
+    SequentialPool,
+)
 
 
 class TasksExecutor:
+    POOL_TYPES = {
+        "simple_thread": SimpleThreadPool,
+        "thread": ThreadPool,
+        "sequential": SequentialPool,
+    }
 
-    def __init__(self, tasks_queues, queues_config):
+    def __init__(self, tasks_queues, queues_config, pools_config):
         self.tasks_queues = tasks_queues
         self.queues_config = queues_config
+        self.pools_config = pools_config
+        self._pools = self._create_pools()
 
-    def consume_task_queue(self, task_queue):
+    def _create_pools(self):
+        pools = {}
+        for pool_config in self.pools_config:
+            pool_name = pool_config.get("name")
+            pool_type = pool_config.get("type")
+            max_workers = pool_config.get("max_workers")
+            pools[pool_name] = self.POOL_TYPES[pool_type](max_workers)
+        return pools
+
+    def consume_task_queue(self, task_queue, pool):
         while True:
             task = task_queue.get()
-            task.process()
+
+            if pool.resource_available:
+                pool.submit(task.process)
 
     def start(self):
         for task_queue_name, task_queue in self.tasks_queues.items():
 
+            for queue_config in self.queues_config:
+                if queue_config.get("name") == task_queue_name:
+                    pool_name = queue_config.get("pool")
+                    pool = self._pools[pool_name]
+
             task_queue_thread = threading.Thread(
-                target=self.consume_task_queue, args=(task_queue,)
+                target=self.consume_task_queue, args=(task_queue, pool)
             )
             task_queue_thread.start()
