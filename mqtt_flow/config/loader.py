@@ -13,8 +13,13 @@ class MQTTConfigLoader:
         client_id_suffix=None,
         userdata=None,
         sub_topics=None,
+        custom_vars=None,
     ):
         self.config = self._load_raw_config(config_path)
+
+        if custom_vars is None:
+            custom_vars = {}
+        self.custom_vars = custom_vars
 
         # TODO : add validator
         for client_config in self.config.get("mqtt_clients", []):
@@ -39,12 +44,14 @@ class MQTTConfigLoader:
         client_id_suffix=None,
         userdata=None,
         sub_topics=None,
+        custom_vars=None,
     ):
         loader = cls(
             config_path=config_path,
             client_id_suffix=client_id_suffix,
             userdata=userdata,
             sub_topics=sub_topics,
+            custom_vars=custom_vars,
         )
 
         return loader.config
@@ -88,12 +95,32 @@ class MQTTConfigLoader:
             )
 
     def _load_raw_config(self, config_path=None):
+
+        class CustomLoader(yaml.SafeLoader):
+            pass
+
+        def var_constructor(loader, node):
+            """Extracts the custom variable from the node's value."""
+            value = loader.construct_scalar(node)
+            return self.custom_vars.get(value, f"Undefined variable: {value}")
+
+        def env_constructor(loader, node):
+            """Extracts the environment variable from the node's value."""
+            value = loader.construct_scalar(node)
+            env_var, default_value = value.split(" ", 1)[0], None
+            if " " in value:  # Check if there's a default value provided
+                env_var, default_value = value.split(" ", 1)
+            return os.getenv(env_var.strip("${}"), default_value)
+
+        CustomLoader.add_constructor("!VAR", var_constructor)
+        CustomLoader.add_constructor("!ENV", env_constructor)
+
         if config_path is None:
             # If no config path is provided, automatically search for it
             config_path = self._find_config_file()
 
         # Load the YAML configuration
         with open(config_path, "r") as file:
-            config = yaml.safe_load(file)
+            config = yaml.load(file, Loader=CustomLoader)
 
         return config
