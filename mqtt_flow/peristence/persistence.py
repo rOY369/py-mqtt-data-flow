@@ -16,6 +16,9 @@ class MockPersistence:
     def put_batch(self, batch):
         pass
 
+    def start(self, uploader):
+        pass
+
 
 class Persistence:
     DEFAULT_UPLOAD_INTERVAL = 5

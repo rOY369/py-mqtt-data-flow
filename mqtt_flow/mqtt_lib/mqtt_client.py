@@ -182,6 +182,7 @@ class MQTTClient:
         threading.Thread(target=self._mqtt_worker).start()
         time.sleep(1)  # Wait for the connection to establish
         threading.Thread(target=self._publish_after_interval).start()
+        self.persistence.start(self)
 
     def stop(self):
         """Stops the MQTT client and finalizes publishing."""
@@ -281,6 +282,21 @@ class MQTTClient:
         except OSError as e:
             self.log.warning(f"Failed to publish message: {e}")
             return None
+
+    def upload_persisted_batch(self, batch):
+        for data_point in batch:
+            topic = data_point["topic"]
+            payload = data_point["payload"]
+            publish_response = None
+            if self.is_connected():
+                publish_response = self.publish(topic, payload)
+            else:
+                return False
+
+            if publish_response is None:
+                return False
+
+        return True
 
     def qpublish(self, topic, payload):
         """
