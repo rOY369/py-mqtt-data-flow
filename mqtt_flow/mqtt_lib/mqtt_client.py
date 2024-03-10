@@ -264,7 +264,7 @@ class MQTTClient:
         for topic in topics:
             self.client.subscribe(topic)
 
-    def publish(self, topic, payload, persist=True):
+    def publish(self, topic, payload, persist=False):
         """
         Publishes a message immediately to the specified topic.
 
@@ -299,13 +299,9 @@ class MQTTClient:
         for data_point in batch:
             topic = data_point["topic"]
             payload = data_point["payload"]
-            publish_response = None
             if self.is_connected():
-                publish_response = self.publish(topic, payload, persist=False)
+                self.qpublish(topic, payload)
             else:
-                return False
-
-            if publish_response is None:
                 return False
 
         return True

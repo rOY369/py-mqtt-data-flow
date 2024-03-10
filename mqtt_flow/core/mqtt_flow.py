@@ -14,8 +14,7 @@ from mqtt_flow.peristence import MQTTPersistence
 logger = get_logger("mqtt_flow")
 
 # TODO log level control
-# TODO set client id
-
+# TODO trigger in persistence]
 
 class MQTTFlow:
     def __init__(self, config):
