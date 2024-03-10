@@ -23,6 +23,7 @@ import json
 from unittest.mock import Mock
 
 from mqtt_flow.utils.helpers import get_logger
+from mqtt_flow.peristence import MockPersistence
 
 
 class MQTTClient:
@@ -91,6 +92,7 @@ class MQTTClient:
         on_connect=Mock(),
         on_message=Mock(),
         on_disconnect=Mock(),
+        persistence=None,
     ):
         """
         Sets up the parameters required to setup the mqtt client. It
@@ -148,6 +150,7 @@ class MQTTClient:
         self.batches = {}
         self.queue = Queue(maxsize=self.queue_size)
         self._batch_lock = threading.Lock()
+        self.persistence = persistence if persistence else MockPersistence()
         self.started = False
 
     def _publish_after_interval(self):

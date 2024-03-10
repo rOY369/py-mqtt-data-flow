@@ -1,6 +1,7 @@
 import re
 import importlib
 from mqtt_flow.utils.helpers import get_logger
+from mqtt_flow.utils.helpers import match_topic
 
 logger = get_logger("mqtt_rule")
 
@@ -58,12 +59,8 @@ class MQTTRule:
         Returns:
             bool: True if the message matches the rule, False otherwise.
         """
-        # Check if the topic matches the regex (if defined)
-        if self.regex and not re.match(self.regex, topic):
-            return False
 
-        # Check if the topic exactly matches (if defined)
-        if self.topic and self.topic != topic:
+        if not match_topic(topic, self.regex, self.topic):
             return False
 
         # Evaluate the condition (if defined)
