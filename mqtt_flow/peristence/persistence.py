@@ -1,5 +1,5 @@
 import persistqueue
-import retry
+from retry import retry
 import threading
 import time
 import json
@@ -60,7 +60,8 @@ class Persistence:
         try:
             self._pqueue = self._create_persistence_queue(self.main_path)
         except:
-            self._pqueue = self._create_persistence_queue(self.backup_path)
+            if self.backup_path:
+                self._pqueue = self._create_persistence_queue(self.backup_path)
 
     @retry(exceptions=(Exception,), **DEFAULT_INIT_RETRY_CONFIG)
     def _create_persistence_queue(self, path):

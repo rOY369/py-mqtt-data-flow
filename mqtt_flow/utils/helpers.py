@@ -20,21 +20,21 @@ def format_topic(topic, topic_formatters=None):
 
     for topic_formatter in topic_formatters:
         # use topic formatter
+
+        remove_prefix = topic_formatter.get("remove_prefix")
+        remove_suffix = topic_formatter.get("remove_suffix")
+
         if topic_formatter.get("prefix", None):
             topic = f"{topic_formatter['prefix']}/{topic}"
 
-        if topic_formatter.get("suffix", None):
+        elif topic_formatter.get("suffix", None):
             topic = f"{topic}/{topic_formatter['suffix']}"
 
-        # Remove prefix if specified
-        remove_prefix = topic_formatter.get("remove_prefix")
-        if remove_prefix and topic.startswith(remove_prefix):
+        elif remove_prefix and topic.startswith(remove_prefix):
             # Ensure removal only affects the start
             topic = topic[len(remove_prefix) :].lstrip("/")
 
-        # Remove suffix if specified
-        remove_suffix = topic_formatter.get("remove_suffix")
-        if remove_suffix and topic.endswith(remove_suffix):
+        elif remove_suffix and topic.endswith(remove_suffix):
             # Ensure removal only affects the end
             topic = topic[: -len(remove_suffix)].rstrip("/")
 

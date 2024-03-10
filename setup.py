@@ -14,6 +14,7 @@ setup(
         "paho-mqtt==1.6.1",
         "PyYAML>=5.4",
         "retry",
+        "persistqueue"
         # Add other dependencies as needed
     ],
     extras_require={

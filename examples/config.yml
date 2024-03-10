@@ -4,10 +4,19 @@ mqtt_clients:
   - client_name: 'client1'
     sub_topics:
       - test/topic1
+    persistence_config:
+      name: simple_persistence
+      main_path: '/tmp/persistence'
+      rules:
+        - topic: 'test/topic1'
+          reupload_topic_formatters:
+            - prefix: old
+
   - client_name: 'client2'
     sub_topics:
       - test/topic2
       - test/topic3
+      - old/test/topic1
 
 tasks_queues:
   - name: 'client1_queue'
@@ -21,7 +30,6 @@ pools:
   - name: 'pool1'
     max_workers: 5
     type: 'simple_thread'
-
 
 # Rules Configuration
 # Rules can specify a direct callback for simple tasks or an action referring to a processing chain.

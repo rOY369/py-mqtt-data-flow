@@ -1,6 +1,6 @@
 from mqtt_flow import MQTTFlow
 from mqtt_flow import MQTTConfigLoader
-
+import time
 
 mqtt_flow = MQTTFlow(
     MQTTConfigLoader.get_config(
@@ -14,4 +14,6 @@ client2 = mqtt_flow.get_client("client2")
 
 
 # client1.publish("test/topic2", "hello")
-client2.publish("test/topic2", "world")
+for i in range(100):
+    client1.publish("test/topic1", f"hello{i}")
+    time.sleep(1)

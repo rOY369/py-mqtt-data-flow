@@ -284,6 +284,9 @@ class MQTTClient:
 
         if self.is_connected():
             try:
+                self.log.info(
+                    f"Publishing message to {topic} with payload: {payload}"
+                )
                 message_info = self.client.publish(topic, payload)
                 return message_info
             except OSError as e:
