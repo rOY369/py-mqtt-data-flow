@@ -13,6 +13,10 @@ class UploadError(Exception):
 
 
 class MockPersistence:
+
+    def append_to_batch(self, data_point):
+        pass
+
     def put_batch(self, batch):
         pass
 
@@ -30,7 +34,7 @@ class Persistence:
     }
 
     DEFAULT_BATCH_RETRY_CONFIG = {
-        "tries": 3,
+        "tries": -1,
         "delay": 1,
         "max_delay": 8,
         "backoff": 2,
@@ -119,7 +123,13 @@ class Persistence:
             except json.decoder.JSONDecodeError:
                 batch_to_upload = batch
 
-            upload_response = uploader.upload_persisted_batch(batch_to_upload)
+            try:
+                upload_response = uploader.upload_persisted_batch(
+                    batch_to_upload
+                )
+            except Exception:
+                logger.exception(f"persist_queue_upload_fail for {self.name}")
+                upload_response = False
 
             if not upload_response:
                 logger.info(f"persist_queue_upload_fail for {self.name}")

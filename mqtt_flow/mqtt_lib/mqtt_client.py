@@ -264,7 +264,7 @@ class MQTTClient:
         for topic in topics:
             self.client.subscribe(topic)
 
-    def publish(self, topic, payload):
+    def publish(self, topic, payload, persist=True):
         """
         Publishes a message immediately to the specified topic.
 
@@ -276,11 +276,20 @@ class MQTTClient:
             self.log.warning("MQTT client not initialized.")
             return
 
-        try:
-            message_info = self.client.publish(topic, payload)
-            return message_info
-        except OSError as e:
-            self.log.warning(f"Failed to publish message: {e}")
+        if self.persistence and persist and not self.is_connected():
+            self.persistence.append_to_batch(
+                {"topic": topic, "payload": payload}
+            )
+            return None
+
+        if self.is_connected():
+            try:
+                message_info = self.client.publish(topic, payload)
+                return message_info
+            except OSError as e:
+                self.log.warning(f"Failed to publish message: {e}")
+                return None
+        else:
             return None
 
     def upload_persisted_batch(self, batch):
@@ -289,7 +298,7 @@ class MQTTClient:
             payload = data_point["payload"]
             publish_response = None
             if self.is_connected():
-                publish_response = self.publish(topic, payload)
+                publish_response = self.publish(topic, payload, persist=False)
             else:
                 return False
 
