@@ -10,7 +10,9 @@ class MQTTConfigLoader:
     def __init__(
         self,
         config_path=None,
+        client_id_prefix=None,
         client_id_suffix=None,
+        client_id_unique=True,
         userdata=None,
         sub_topics=None,
         custom_vars=None,
@@ -23,11 +25,15 @@ class MQTTConfigLoader:
 
         # TODO : add validator
         for client_config in self.config.get("mqtt_clients", []):
-            client_config["client_id"] = client_config["client_name"]
+            if not client_config.get("client_id"):
+                client_config["client_id"] = client_config["client_name"]
 
         if client_id_suffix:
             for client_name, suffix in client_id_suffix.items():
                 self.add_suffix_to_client_id(client_name, suffix)
+        if client_id_prefix:
+            for client_name, prefix in client_id_prefix.items():
+                self.add_prefix_to_client_id(client_name, prefix)
         if userdata:
             for client_name, userdata in userdata.items():
                 self.register_userdata(client_name, userdata)
@@ -35,7 +41,8 @@ class MQTTConfigLoader:
             for client_name, sub_topics in sub_topics.items():
                 self.register_sub_topics(client_name, sub_topics)
 
-        self.make_client_id_unique()
+        if client_id_unique:
+            self.make_client_id_unique()
 
     @classmethod
     def get_config(
@@ -69,7 +76,14 @@ class MQTTConfigLoader:
                     f"{client_config['client_name']}_{suffix}"
                 )
 
-    def append_sub_topics(self, client_name, topics):
+    def add_prefix_to_client_id(self, client_name, prefix):
+        for client_config in self.config.get("mqtt_clients", []):
+            if client_config.get("client_name") == client_name:
+                client_config["client_id"] = (
+                    f"{prefix}_{client_config['client_name']}"
+                )
+
+    def register_sub_topics(self, client_name, topics):
         for client_config in self.config.get("mqtt_clients", []):
             if client_config.get("client_name") == client_name:
                 client_config.get("sub_topics", []).extend(topics)

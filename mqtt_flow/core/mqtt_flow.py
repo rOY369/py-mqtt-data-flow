@@ -14,7 +14,6 @@ logger = get_logger("mqtt_flow")
 
 # TODO log level control
 # TODO set client id
-# TODO load env variable or custom data in conf yml for relay message
 
 
 class MQTTFlow:
