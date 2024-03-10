@@ -16,6 +16,7 @@ class MQTTConfigLoader:
         userdata=None,
         sub_topics=None,
         custom_vars=None,
+        persistence=None,
     ):
         self.config = self._load_raw_config(config_path)
 
@@ -40,6 +41,9 @@ class MQTTConfigLoader:
         if sub_topics:
             for client_name, sub_topics in sub_topics.items():
                 self.register_sub_topics(client_name, sub_topics)
+        if persistence:
+            for client_name, persistence in persistence.items():
+                self.register_persistence(client_name, persistence)
 
         if client_id_unique:
             self.make_client_id_unique()
@@ -52,6 +56,7 @@ class MQTTConfigLoader:
         userdata=None,
         sub_topics=None,
         custom_vars=None,
+        persistence=None,
     ):
         loader = cls(
             config_path=config_path,
@@ -59,9 +64,15 @@ class MQTTConfigLoader:
             userdata=userdata,
             sub_topics=sub_topics,
             custom_vars=custom_vars,
+            persistence=persistence,
         )
 
         return loader.config
+
+    def register_persistence(self, client_name, persistence):
+        for client_config in self.config.get("mqtt_clients", []):
+            if client_config.get("client_name") == client_name:
+                client_config["persistence"] = persistence
 
     def make_client_id_unique(self):
         for client_config in self.config.get("mqtt_clients", []):

@@ -9,7 +9,7 @@ from mqtt_flow.core.tasks_executor import TasksExecutor
 import queue
 import threading
 from mqtt_flow.utils.helpers import get_logger
-from mqtt_flow.peristence import Persistence
+from mqtt_flow.peristence import MQTTPersistence
 
 logger = get_logger("mqtt_flow")
 
@@ -89,9 +89,11 @@ class MQTTFlow:
             "userdata": client_config.get("userdata"),
         }
 
-        persistence_config = client_config.get("persistence")
-        if persistence_config:
-            persistence = Persistence(persistence_config)
+        persistence = client_config.get("persistence")
+        if not persistence:
+            persistence_config = client_config.get("persistence_config")
+            if persistence_config:
+                persistence = MQTTPersistence(persistence_config)
 
         return MQTTClient(
             **{
