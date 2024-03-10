@@ -48,7 +48,7 @@ class MQTTRule:
 
         return None
 
-    def is_rule_matched(self, message):
+    def is_rule_matched(self, topic, payload):
         """
         Checks if the given message matches the rule criteria.
 
@@ -59,11 +59,11 @@ class MQTTRule:
             bool: True if the message matches the rule, False otherwise.
         """
         # Check if the topic matches the regex (if defined)
-        if self.regex and not re.match(self.regex, message["topic"]):
+        if self.regex and not re.match(self.regex, topic):
             return False
 
         # Check if the topic exactly matches (if defined)
-        if self.topic and self.topic != message["topic"]:
+        if self.topic and self.topic != topic:
             return False
 
         # Evaluate the condition (if defined)
@@ -75,7 +75,7 @@ class MQTTRule:
                 condition_met = eval(
                     self.condition,
                     {},
-                    {"topic": message["topic"], "payload": message["payload"]},
+                    {"topic": topic, "payload": payload},
                 )
             except Exception as e:
                 logger.exception(

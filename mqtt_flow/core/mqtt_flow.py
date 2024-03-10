@@ -16,6 +16,7 @@ logger = get_logger("mqtt_flow")
 # TODO Base task class
 # TODO Tasks library
 
+
 class MQTTFlow:
     def __init__(self, config):
         self.config = config
@@ -129,18 +130,23 @@ class MQTTFlow:
 
         while True:
             message = incoming_queue.get()
+            topic = message["topic"]
+            payload = message["payload"]
+            userdata = message["userdata"]
+
             logger.info(
                 f"MQTT client {client_name} received message: {message['topic']} -> {message['payload']}"
             )
 
             for rule_name, rule in self._rules.get(client_name, {}).items():
-                if rule.is_rule_matched(message):
-                    # TODO put task in queue
+                if rule.is_rule_matched(topic, payload):
                     logger.info(f"Rule {rule_name} matched for {client_name}")
                     task_class = rule.task_class
 
                     if task_class:
-                        task = task_class(message, rule.task_config)
+                        task = task_class(
+                            topic, payload.copy(), userdata, rule.task_config
+                        )
                         self._tasks_queues[rule.queue_name].put(task)
 
     def _outgoing_msg_queue_consumer(self, client_name):
