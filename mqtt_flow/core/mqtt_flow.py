@@ -13,8 +13,8 @@ from mqtt_flow.utils.helpers import get_logger
 logger = get_logger("mqtt_flow")
 
 # TODO log level control
-# TODO Base task class
-# TODO Tasks library
+# TODO set client id
+# TODO load env variable or custom data in conf yml for relay message
 
 
 class MQTTFlow:
@@ -50,7 +50,7 @@ class MQTTFlow:
                 client_config["userdata"] = {}
 
             client_config["userdata"]["_client_name"] = client_name
-            client_config["userdata"]["_rules"] = self._rules
+            # client_config["userdata"]["_rules"] = self._rules
             client_config["userdata"]["_tasks_queues"] = self._tasks_queues
             client_config["userdata"]["_clients_queues"] = self._clients_queues
 
