@@ -12,6 +12,9 @@ from mqtt_flow.utils.helpers import get_logger
 
 logger = get_logger("mqtt_flow")
 
+# TODO log level control
+# TODO Base task class
+# TODO Tasks library
 
 class MQTTFlow:
     def __init__(self, config):

@@ -34,6 +34,7 @@ class SimpleThreadPool:
     def __init__(self, pool_config):
         self.name = pool_config.get("name")
         self.max_workers = pool_config.get("max_workers")
+        self.thread_base_name = f"{self.TASK_THREAD_NAME}_{self.name}"
 
     @property
     def resource_available(self):
@@ -45,7 +46,7 @@ class SimpleThreadPool:
         metric_task_threads = [
             thread
             for thread in all_threads
-            if thread.name.startswith(self.TASK_THREAD_NAME)
+            if thread.name.startswith(self.thread_base_name)
         ]
         return len(metric_task_threads)
 
@@ -56,7 +57,7 @@ class SimpleThreadPool:
             target=task,
             args=args,
             kwargs=kwargs,
-            name=f"{self.TASK_THREAD_NAME}_{uuid.uuid4()}",
+            name=f"{self.thread_base_name}_{uuid.uuid4()}",
         ).start()
 
 
