@@ -9,7 +9,6 @@ class MQTTFlowTask(metaclass=abc.ABCMeta):
         self.task_config = task_config
 
         self._client_name = self._userdata.get("_client_name")
-        # self._rules = self._userdata.get("_rules")
         self._tasks_queues = self._userdata.get("_tasks_queues")
         self._clients_queues = self._userdata.get("_clients_queues")
 

@@ -49,7 +49,6 @@ class MQTTFlow:
                 client_config["userdata"] = {}
 
             client_config["userdata"]["_client_name"] = client_name
-            # client_config["userdata"]["_rules"] = self._rules
             client_config["userdata"]["_tasks_queues"] = self._tasks_queues
             client_config["userdata"]["_clients_queues"] = self._clients_queues
 
