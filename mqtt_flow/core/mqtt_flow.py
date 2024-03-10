@@ -144,7 +144,7 @@ class MQTTFlow:
 
                     if task_class:
                         task = task_class(
-                            topic, payload.copy(), userdata, rule.task_config
+                            topic, payload, userdata, rule.task_config
                         )
                         self._tasks_queues[rule.queue_name].put(task)
 
@@ -154,6 +154,9 @@ class MQTTFlow:
 
         while True:
             message = outgoing_queue.get()
+            logger.info(
+                f"MQTT client {client_name} sending message: {message['topic']} -> {message['payload']}"
+            )
             client.publish(message["topic"], message["payload"])
 
     def start(self):

@@ -13,6 +13,9 @@ class RelayMessage(MQTTFlowTask):
             self.topic_formatter = {}
 
     def format_topic(self):
+        if self.topic_to_publish:
+            return self.topic_to_publish
+
         topic = self.topic
 
         # use topic formatter
@@ -37,7 +40,7 @@ class RelayMessage(MQTTFlowTask):
         return topic
 
     def format_payload(self):
-        return self.payload.copy()
+        return self.payload
 
     def process(self):
         topic = self.format_topic()

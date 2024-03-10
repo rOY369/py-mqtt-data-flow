@@ -24,8 +24,7 @@ class TasksExecutor:
         for pool_config in self.pools_config:
             pool_name = pool_config.get("name")
             pool_type = pool_config.get("type")
-            max_workers = pool_config.get("max_workers")
-            pools[pool_name] = self.POOL_TYPES[pool_type](max_workers)
+            pools[pool_name] = self.POOL_TYPES[pool_type](pool_config)
         return pools
 
     def consume_task_queue(self, task_queue, pool):

@@ -13,6 +13,5 @@ client1 = mqtt_flow.get_client("client1")
 client2 = mqtt_flow.get_client("client2")
 
 
-for i in range(50):
-    client1.publish("test/topic2", "hello")
-    client2.publish("test/topic1", "world")
+# client1.publish("test/topic2", "hello")
+client2.publish("test/topic2", "world")
