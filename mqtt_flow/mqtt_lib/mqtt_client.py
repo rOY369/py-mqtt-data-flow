@@ -209,7 +209,7 @@ class MQTTClient:
             )
             self.client.reconnect()
 
-    def _ssl_alpn(self, alpn_protocol, ca, cert, key):
+    def _prepare_ssl_context(self, alpn_protocol, ca, cert, key):
         """Sets up SSL context with ALPN for AWS IoT connection."""
         ssl_context = ssl.create_default_context()
         if alpn_protocol:
