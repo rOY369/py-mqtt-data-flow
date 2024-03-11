@@ -68,9 +68,10 @@ class MQTTConfigLoader:
 
     def make_client_id_unique(self):
         for client_config in self.config.get("mqtt_clients", []):
-            client_config["client_id"] = (
-                f"{client_config['client_id']}_{str(uuid.uuid4()).split('-')[0]}"
-            )
+            if client_config.get("client_id_unique", True) is True:
+                client_config["client_id"] = (
+                    f"{client_config['client_id']}_{str(uuid.uuid4()).split('-')[0]}"
+                )
 
     def register_sub_topics(self, client_name, topics):
         for client_config in self.config.get("mqtt_clients", []):

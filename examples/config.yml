@@ -31,7 +31,8 @@ logging:
 
 mqtt_clients:
   - client_name: 'example_client' # Unique name for the MQTT client. Used if client_id is not provided.
-    client_id: null # Optional. A unique client ID. Default: Automatically generated based on client_name.
+    client_id: "" # Optional. A unique client ID. Default: Automatically generated based on client_name.
+    client_id_unique: yes # Optional. Whether to make the client_id unique. Default yes
     server: '127.0.0.1' # MQTT server address. Default: '127.0.0.1'.
     port: 1883 # MQTT server port. Default: 1883.
     max_reconnect_delay: 8 # Maximum delay in seconds between reconnection attempts. Default: 8.
