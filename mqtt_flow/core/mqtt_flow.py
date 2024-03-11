@@ -28,8 +28,8 @@ class MQTTFlow:
         self._clients = self._create_mqtt_clients()
         self._tasks_executor = TasksExecutor(
             self._tasks_queues,
-            self.config.copy().get("tasks_queues"),
-            self.config.copy().get("pools"),
+            self.config.copy().get("tasks_queues", []),
+            self.config.copy().get("pools", []),
         )
 
     def _create_rules(self):
