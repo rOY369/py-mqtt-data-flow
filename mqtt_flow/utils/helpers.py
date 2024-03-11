@@ -1,8 +1,17 @@
 import logging
 import re
+from mqtt_flow.config.loader import MQTTConfigLoader
 
 
-def get_logger(name, level=logging.INFO):
+def get_logger(name, level=None):
+    loggers = MQTTConfigLoader.loggers
+    default_log_level = MQTTConfigLoader.default_log_level
+
+    if not level:
+        if name in loggers and "level" in loggers[name]:
+            level = loggers[name]["level"]
+        else:
+            level = default_log_level
 
     logging.basicConfig(
         level=logging.INFO,

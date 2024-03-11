@@ -11,13 +11,15 @@ import threading
 from mqtt_flow.utils.helpers import get_logger
 from mqtt_flow.peristence import MQTTPersistence
 
-logger = get_logger("mqtt_flow")
 
-# TODO log level control
-# TODO trigger in persistence]
+# TODO trigger in persistence (application level)
+# TODO config, readme
+# TODO code doc + docs link on github
+
 
 class MQTTFlow:
     def __init__(self, config):
+        self.logger = get_logger("mqtt_flow")
         self.config = config
         self._clients_queues = self._create_mqtt_clients_queues()
         self._tasks_queues = self._create_tasks_queues()
@@ -74,6 +76,7 @@ class MQTTFlow:
         """Create MQTT client instance based on the loaded configuration."""
 
         client_attributes = {
+            "client_name": client_config.get("client_name"),
             "client_id": client_config.get("client_id"),
             "server": client_config.get("server"),
             "port": client_config.get("port"),
@@ -139,13 +142,18 @@ class MQTTFlow:
             payload = message["payload"]
             userdata = message["userdata"]
 
-            logger.info(
-                f"MQTT client {client_name} received message: {message['topic']} -> {message['payload']}"
+            self.logger.debug(
+                f"Incoming Message : {message['topic']} -> {message['payload']}"
             )
 
             for rule_name, rule in self._rules.get(client_name, {}).items():
                 if rule.is_rule_matched(topic, payload):
-                    logger.info(f"Rule {rule_name} matched for {client_name}")
+                    self.logger.info(
+                        f"Rule {rule_name} matched for {client_name}"
+                    )
+                    self.logger.info(
+                        f"Incoming Message to {client_name}: {message['topic']} -> {message['payload']}"
+                    )
                     task_class = rule.task_class
 
                     if task_class:
@@ -160,8 +168,8 @@ class MQTTFlow:
 
         while True:
             message = outgoing_queue.get()
-            logger.info(
-                f"MQTT client {client_name} sending message: {message['topic']} -> {message['payload']}"
+            self.logger.info(
+                f"Outgoing Message from {client_name}: {message['topic']} -> {message['payload']}"
             )
             client.publish(message["topic"], message["payload"])
 

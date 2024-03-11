@@ -1,6 +1,7 @@
 from mqtt_flow.peristence import Persistence
 from mqtt_flow.utils.helpers import match_topic, format_topic
 import re
+from mqtt_flow.utils.helpers import get_logger
 
 
 class MQTTPersistence(Persistence):
@@ -8,6 +9,7 @@ class MQTTPersistence(Persistence):
     def __init__(self, config):
         super().__init__(config)
         self._rules = config.get("rules", [])
+        self.logger = get_logger("mqtt_persistence")
 
     def apply_rule(self, topic):
         for rule in self._rules:
@@ -38,5 +40,8 @@ class MQTTPersistence(Persistence):
                 "topic": reupload_topic,
                 "payload": reupload_payload,
             }
+            self.logger.info(
+                f"Adding message to persistence : {reupload_data_point['topic']}"
+            )
 
             super().append_to_batch(reupload_data_point)

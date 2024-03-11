@@ -5,8 +5,6 @@ import time
 import json
 from mqtt_flow.utils.helpers import get_logger
 
-logger = get_logger("persistence")
-
 
 class UploadError(Exception):
     pass
@@ -43,6 +41,8 @@ class Persistence:
     DEFAULT_BATCH_UPLOAD_MIN_DELAY = 60
 
     def __init__(self, config):
+        self.logger = get_logger("persistence")
+
         self.name = config.get("name")
         self.main_path = config.get("main_path")
         self.backup_path = config.get("backup_path")
@@ -115,9 +115,9 @@ class Persistence:
         try:
             batch = self._pqueue.get_nowait()
         except persistqueue.exceptions.Empty:
-            logger.info(f"persist_queue_empty for {self.name}")
+            self.logger.debug(f"persist_queue_empty for {self.name}")
         else:
-            logger.info(f"persist_queue_upload_try for {self.name}")
+            self.logger.info(f"persist_queue_upload_try for {self.name}")
 
             try:
                 batch_to_upload = json.loads(batch)
@@ -129,14 +129,18 @@ class Persistence:
                     batch_to_upload
                 )
             except Exception:
-                logger.exception(f"persist_queue_upload_fail for {self.name}")
+                self.logger.exception(
+                    f"persist_queue_upload_fail for {self.name}"
+                )
                 upload_response = False
 
             if not upload_response:
-                logger.info(f"persist_queue_upload_fail for {self.name}")
+                self.logger.info(f"persist_queue_upload_fail for {self.name}")
                 raise UploadError()
             else:
-                logger.info(f"persist_queue_upload_success for {self.name}")
+                self.logger.info(
+                    f"persist_queue_upload_success for {self.name}"
+                )
 
             self._pqueue.task_done()
 

@@ -52,7 +52,9 @@ class MQTTConfigLoader:
     def get_config(
         cls,
         config_path=None,
+        client_id_prefix=None,
         client_id_suffix=None,
+        client_id_unique=True,
         userdata=None,
         sub_topics=None,
         custom_vars=None,
@@ -60,12 +62,19 @@ class MQTTConfigLoader:
     ):
         loader = cls(
             config_path=config_path,
+            client_id_prefix=client_id_prefix,
             client_id_suffix=client_id_suffix,
+            client_id_unique=client_id_unique,
             userdata=userdata,
             sub_topics=sub_topics,
             custom_vars=custom_vars,
             persistence=persistence,
         )
+
+        config = loader.config
+        logging_config = config.get("logging", {})
+        cls.default_log_level = logging_config.get("default_level")
+        cls.loggers = logging_config.get("loggers", {})
 
         return loader.config
 

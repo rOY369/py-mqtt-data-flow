@@ -1,5 +1,30 @@
 # MQTT Clients Configuration
 # Define all MQTT clients along with the topics they subscribe to.
+
+logging:
+  default_level: INFO
+  loggers:
+    mqtt_flow:
+      level: INFO
+    mqtt_client_client1:
+      level: INFO
+    mqtt_client_client2:
+      level: INFO
+    mqtt_on_msg_callback:
+      level: INFO
+    mqtt_on_connect_callback:
+      level: INFO
+    mqtt_on_disconnect_callback:
+      level: INFO
+    executor_pools:
+      level: INFO
+    mqtt_rule:
+      level: INFO
+    persistence:
+      level: INFO
+    mqtt_persistence:
+      level: INFO
+
 mqtt_clients:
   - client_name: 'client1'
     sub_topics:

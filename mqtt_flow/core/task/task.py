@@ -7,6 +7,7 @@ class MQTTFlowTask(metaclass=abc.ABCMeta):
         self.payload = payload
         self._userdata = userdata
         self.task_config = task_config
+        self.name = task_config.get("name")
 
         self._client_name = self._userdata.get("_client_name")
         self._tasks_queues = self._userdata.get("_tasks_queues")
@@ -16,6 +17,9 @@ class MQTTFlowTask(metaclass=abc.ABCMeta):
         self._clients_queues[client_name]["outgoing"].put(
             {"topic": topic, "payload": payload}
         )
+
+    def __str__(self):
+        return f"Task {self.name} with topic {self.topic} and payload {self.payload}"
 
     def execute_task(self, task, task_queue_name):
         task_queue = self._tasks_queues[task_queue_name]

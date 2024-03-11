@@ -77,6 +77,7 @@ class MQTTClient:
 
     def __init__(
         self,
+        client_name=None,
         client_id=None,
         server="127.0.0.1",
         port=1883,
@@ -132,8 +133,9 @@ class MQTTClient:
                     }
         """
         self.userdata = userdata
+        self.client_name = client_name
         self.client_id = client_id
-        self.log = get_logger(f"mqtt_client_{client_id}")
+        self.log = get_logger(f"mqtt_client_{client_name}")
         self.server = server
         self.port = port
         self.max_reconnect_delay = max_reconnect_delay
@@ -274,7 +276,7 @@ class MQTTClient:
         """
         if not hasattr(self, "client"):
             self.log.warning("MQTT client not initialized.")
-            return
+            return None
 
         if self.persistence and persist and not self.is_connected():
             self.persistence.append_to_batch(
@@ -284,8 +286,8 @@ class MQTTClient:
 
         if self.is_connected():
             try:
-                self.log.info(
-                    f"Publishing message to {topic} with payload: {payload}"
+                self.log.debug(
+                    f"Outgoing Message from {self.client_name}: {topic} -> {payload}"
                 )
                 message_info = self.client.publish(topic, payload)
                 return message_info
@@ -300,6 +302,9 @@ class MQTTClient:
             topic = data_point["topic"]
             payload = data_point["payload"]
             if self.is_connected():
+                self.log.info(
+                    f"Uploading message from persisted batch to {topic} -> {payload}"
+                )
                 self.qpublish(topic, payload)
             else:
                 return False

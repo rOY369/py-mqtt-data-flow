@@ -4,6 +4,7 @@ from mqtt_flow.core.executor_pools import (
     ThreadPool,
     SequentialPool,
 )
+from mqtt_flow.utils.helpers import get_logger
 
 
 class TasksExecutor:
@@ -14,6 +15,7 @@ class TasksExecutor:
     }
 
     def __init__(self, tasks_queues, queues_config, pools_config):
+        self.logger = get_logger("tasks_executor")
         self.tasks_queues = tasks_queues
         self.queues_config = queues_config
         self.pools_config = pools_config
@@ -30,7 +32,7 @@ class TasksExecutor:
     def consume_task_queue(self, task_queue, pool):
         while True:
             task = task_queue.get()
-
+            self.logger.info(f"Executing Task {task}")
             if pool.resource_available:
                 pool.submit(task.process)
 

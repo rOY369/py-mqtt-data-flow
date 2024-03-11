@@ -1,7 +1,5 @@
 from mqtt_flow.utils.helpers import get_logger
 
-logger = get_logger("mqtt_on_disconnect_callback")
-
 
 class OnDisconnectCallback:
     @classmethod
@@ -11,6 +9,7 @@ class OnDisconnectCallback:
         Returns:
             function: The configured on_disconnect callback function.
         """
+        logger = get_logger("mqtt_on_disconnect_callback")
 
         def on_disconnect(client, userdata, rc):
             """
@@ -20,7 +19,7 @@ class OnDisconnectCallback:
                 userdata: The private user data as set in Client() or userdata_set().
                 rc: The connection result.
             """
-            logger.info(
+            logger.critical(
                 f"MQTT client {client._client_id} disconnected with result code {rc}"
             )
 

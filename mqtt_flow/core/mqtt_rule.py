@@ -3,8 +3,6 @@ import importlib
 from mqtt_flow.utils.helpers import get_logger
 from mqtt_flow.utils.helpers import match_topic
 
-logger = get_logger("mqtt_rule")
-
 
 class MQTTRule:
     def __init__(self, rule_config):
@@ -14,6 +12,7 @@ class MQTTRule:
         Args:
             rule_config (dict): Configuration for the rule, including conditions and task information.
         """
+        self.logger = get_logger("mqtt_rule")
         self.rule_name = rule_config.get("rule_name")
         self.source_client_name = rule_config.get("source_client_name")
         self.regex = rule_config.get("regex")
@@ -75,7 +74,7 @@ class MQTTRule:
                     {"topic": topic, "payload": payload},
                 )
             except Exception as e:
-                logger.exception(
+                self.logger.exception(
                     f"Error evaluating rule condition {self.condition} for {self.rule_name}"
                 )
                 return False

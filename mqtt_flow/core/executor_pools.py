@@ -4,13 +4,12 @@ import threading
 import uuid
 from mqtt_flow.utils.helpers import get_logger
 
-logger = get_logger("executor_pools")
-
 
 class SequentialPool:
     def __init__(self, pool_config):
         self.name = pool_config.get("name")
         self.max_workers = pool_config.get("max_workers")
+        self.logger = get_logger("executor_pools")
 
     @property
     def resource_available(self):
@@ -25,7 +24,7 @@ class SequentialPool:
         try:
             task(*args, **kwargs)
         except Exception:
-            logger.exception("Exception in Task Consumer")
+            self.logger.exception("Exception in Task Consumer")
 
 
 class SimpleThreadPool:

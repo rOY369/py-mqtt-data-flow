@@ -1,8 +1,6 @@
 from mqtt_flow.utils.helpers import get_logger
 import json
 
-logger = get_logger("mqtt_on_msg_callback")
-
 
 class OnMessageCallback:
     @classmethod
@@ -12,6 +10,7 @@ class OnMessageCallback:
         Returns:
             function: The configured on_message callback function.
         """
+        logger = get_logger("mqtt_on_msg_callback")
 
         def on_message(client, userdata, message):
             """
@@ -28,7 +27,7 @@ class OnMessageCallback:
             except json.decoder.JSONDecodeError:
                 payload = str(message.payload)[2:-1]
 
-            logger.info(
+            logger.debug(
                 f"MQTT client {client._client_id} received message on topic {topic} with payload {payload}"
             )
 
