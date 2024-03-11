@@ -56,7 +56,7 @@ class MQTTConfigLoader:
 
         config = loader.config
         logging_config = config.get("logging", {})
-        cls.default_log_level = logging_config.get("default_level")
+        cls.default_log_level = logging_config.get("default_level", "INFO")
         cls.loggers = logging_config.get("loggers", {})
 
         return loader.config
