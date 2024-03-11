@@ -1,75 +1,99 @@
-# MQTT Clients Configuration
-# Define all MQTT clients along with the topics they subscribe to.
+# General Configuration for MQTTFlow Framework
+# This section configures logging levels for different components of the framework.
 
 logging:
-  default_level: INFO
+  default_level: INFO # Default logging level for the entire application.
   loggers:
+    # Each logger corresponds to a specific component or functionality within the framework.
     mqtt_flow:
-      level: INFO
+      level: INFO # Logging level for the main MQTTFlow framework operations.
     mqtt_client_client1:
-      level: INFO
+      level: INFO # Logging level for MQTT client named 'client1'.
     mqtt_client_client2:
-      level: INFO
+      level: INFO # Logging level for MQTT client named 'client2'.
     mqtt_on_msg_callback:
-      level: INFO
+      level: INFO # Logging level for the on_message callback operations.
     mqtt_on_connect_callback:
-      level: INFO
+      level: INFO # Logging level for the on_connect callback operations.
     mqtt_on_disconnect_callback:
-      level: INFO
+      level: INFO # Logging level for the on_disconnect callback operations.
     executor_pools:
-      level: INFO
+      level: INFO # Logging level for executor pools managing task execution.
     mqtt_rule:
-      level: INFO
+      level: INFO # Logging level for rule processing logic.
     persistence:
-      level: INFO
+      level: INFO # Logging level for general persistence mechanisms.
     mqtt_persistence:
-      level: INFO
+      level: INFO # Logging level for MQTT-specific persistence operations.
+
+# MQTT Clients Configuration
+# Define configurations for each MQTT client, including subscription topics and persistence settings.
 
 mqtt_clients:
-  - client_name: 'client1'
-    sub_topics:
-      - test/topic1
+  - client_name: 'example_client' # Unique name for the MQTT client. Used if client_id is not provided.
+    client_id: null # Optional. A unique client ID. Default: Automatically generated based on client_name.
+    server: '127.0.0.1' # MQTT server address. Default: '127.0.0.1'.
+    port: 1883 # MQTT server port. Default: 1883.
+    max_reconnect_delay: 8 # Maximum delay in seconds between reconnection attempts. Default: 8.
+    will_set_topic: null # Optional. Topic for the Will message. Default: None.
+    will_set_payload: null # Optional. Payload for the Will message. Default: None.
+    keep_alive: 60 # Keep alive interval in seconds. Default: 60.
+    queue_size: 5 # Size of the internal message queue. Default: 5.
+    batch_size: 5 # Number of messages to batch before publishing. Default: 5.
+    publish_interval: 60 # Interval in seconds to publish queued/batched messages. Default: 60.
+    ssl_config: # SSL/TLS configuration. Optional. Default: None.
+      alpn_protocol: 'x-amzn-mqtt-ca' # ALPN protocol name. Required for AWS IoT Core.
+      ca: 'path/to/ca.pem' # Path to the CA certificate file.
+      cert: 'path/to/cert.pem' # Path to the client certificate file.
+      key: 'path/to/private.key' # Path to the client private key file.
+    sub_topics: # Topics the client subscribes to. Specify as a list.
+      - 'example/topic'
     persistence_config:
-      name: simple_persistence
-      main_path: '/tmp/persistence'
+      name: 'sensor_data' # Identifier for the persistence mechanism used by this client.
+      main_path: '/tmp/persistence' # Main directory for storing persistent data.
+      backup_path: '/tmp/persistence-backup' # Backup directory for persistent data.
       rules:
-        - topic: 'test/topic1'
-          reupload_topic_formatters:
-            - prefix: old
+        # Any of topic, regex or both can be used
+        - topic: 'sensor/53/temperature' # Topic associated with this persistence rule.
+          # regex: '.*' # Regular expression pattern for matching topics.
+          reupload_topic_formatters: # if not specified, same topic will be used
+            - suffix: old # Suffix added to topics when re-uploading from persistence.
 
-  - client_name: 'client2'
-    sub_topics:
-      - test/topic2
-      - test/topic3
-      - old/test/topic1
+# Executor Pools Configuration
+# Define executor pools for parallel task execution.
+pools:
+  - name: 'example_pool' # Unique identifier for the executor pool.
+    max_workers: 5 # Maximum number of worker threads in the pool.
+    type: 'simple_thread' # Type of executor any of simple_thread, thread or sequential.
+
+# Task Queues Configuration
+# Define task queues for managing asynchronous task execution.
 
 tasks_queues:
-  - name: 'client1_queue'
-    size: 5
-    pool: 'pool1'
-  - name: 'client2_queue'
-    size: 10
-    pool: 'pool1'
-
-pools:
-  - name: 'pool1'
-    max_workers: 5
-    type: 'simple_thread'
+  - name: 'example_task_queue' # Unique identifier for the task queue.
+    size: 5 # Maximum number of tasks the queue can hold.
+    pool: 'pool1' # Executor pool associated with this task queue.
 
 # Rules Configuration
-# Rules can specify a direct callback for simple tasks or an action referring to a processing chain.
+# Define rules for processing incoming MQTT messages.
+
 rules:
-  # - name: 'simple_rule1'
-  #   source_client_name: 'client1'
-  #   topic: 'test/topic1'
-  #   task:
-  #     path: 'task.Task'
-  #     queue_name: client1_queue
-  - name: 'relay_rule'
-    source_client_name: 'client2'
-    topic: 'test/topic2'
+  - name: 'example_rule' # Unique identifier for the rule.
+    source_client_name: 'example_client' # Name of the client that the rule applies to.
+    # Any of topic, regex or both can be used
+    topic: 'sensor/data' # Topic filter for the rule.
+    regex: '.*' # Regular expression pattern for matching topics.
     task:
-      path: 'mqtt_flow.core.task.RelayMessage'
-      queue_name: client2_queue
-      client_to_publish: 'client1'
-      topic_to_publish: 'test/topic3'
+      path: 'path.to.task.class' # Python interpretable dot separated Path to the Task class to be executed when the rule matches.
+      queue_name: client1_queue # Name of the task queue for executing the task.
+  - name: 'relay_rule'
+    source_client_name: 'example_client'
+    topic: 'sensor/data'
+    task:
+      path: 'mqtt_flow.core.task.RelayMessage' # Path to the RelayMessage task class.
+      queue_name: client1_queue
+      client_to_publish: 'example_client' # Client to which the message will be published.
+      # Any of topic_to_publish or topic_formatters can be used
+      topic_to_publish: 'sensor/data/relay' # Topic to publish the relayed message.
+      # topic_formatters:
+      #   - suffix: relay

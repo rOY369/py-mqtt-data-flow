@@ -10,31 +10,21 @@ class MQTTConfigLoader:
     def __init__(
         self,
         config_path=None,
-        client_id_prefix=None,
-        client_id_suffix=None,
-        client_id_unique=True,
         userdata=None,
         sub_topics=None,
         custom_vars=None,
         persistence=None,
     ):
-        self.config = self._load_raw_config(config_path)
-
         if custom_vars is None:
             custom_vars = {}
         self.custom_vars = custom_vars
+        self.config = self._load_raw_config(config_path)
 
         # TODO : add validator
         for client_config in self.config.get("mqtt_clients", []):
             if not client_config.get("client_id"):
                 client_config["client_id"] = client_config["client_name"]
 
-        if client_id_suffix:
-            for client_name, suffix in client_id_suffix.items():
-                self.add_suffix_to_client_id(client_name, suffix)
-        if client_id_prefix:
-            for client_name, prefix in client_id_prefix.items():
-                self.add_prefix_to_client_id(client_name, prefix)
         if userdata:
             for client_name, userdata in userdata.items():
                 self.register_userdata(client_name, userdata)
@@ -45,16 +35,12 @@ class MQTTConfigLoader:
             for client_name, persistence in persistence.items():
                 self.register_persistence(client_name, persistence)
 
-        if client_id_unique:
-            self.make_client_id_unique()
+        self.make_client_id_unique()
 
     @classmethod
     def get_config(
         cls,
         config_path=None,
-        client_id_prefix=None,
-        client_id_suffix=None,
-        client_id_unique=True,
         userdata=None,
         sub_topics=None,
         custom_vars=None,
@@ -62,9 +48,6 @@ class MQTTConfigLoader:
     ):
         loader = cls(
             config_path=config_path,
-            client_id_prefix=client_id_prefix,
-            client_id_suffix=client_id_suffix,
-            client_id_unique=client_id_unique,
             userdata=userdata,
             sub_topics=sub_topics,
             custom_vars=custom_vars,
@@ -88,20 +71,6 @@ class MQTTConfigLoader:
             client_config["client_id"] = (
                 f"{client_config['client_id']}_{str(uuid.uuid4()).split('-')[0]}"
             )
-
-    def add_suffix_to_client_id(self, client_name, suffix):
-        for client_config in self.config.get("mqtt_clients", []):
-            if client_config.get("client_name") == client_name:
-                client_config["client_id"] = (
-                    f"{client_config['client_name']}_{suffix}"
-                )
-
-    def add_prefix_to_client_id(self, client_name, prefix):
-        for client_config in self.config.get("mqtt_clients", []):
-            if client_config.get("client_name") == client_name:
-                client_config["client_id"] = (
-                    f"{prefix}_{client_config['client_name']}"
-                )
 
     def register_sub_topics(self, client_name, topics):
         for client_config in self.config.get("mqtt_clients", []):
