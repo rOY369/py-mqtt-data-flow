@@ -14,7 +14,7 @@ class MQTTRule:
         self.rule_name = rule_config.get("name")
         self.source_client_name = rule_config.get("source_client_name")
         self.regex = rule_config.get("regex")
-        self.topic = rule_config.get("topic")
+        self.rule_topic = rule_config.get("topic")
         self.condition = rule_config.get("condition")
         self.task_name = rule_config.get("task")
 
@@ -29,7 +29,7 @@ class MQTTRule:
             bool: True if the message matches the rule, False otherwise.
         """
 
-        if not match_topic(topic, self.regex, self.topic):
+        if not match_topic(topic, self.regex, self.rule_topic):
             return False
 
         # Evaluate the condition (if defined)

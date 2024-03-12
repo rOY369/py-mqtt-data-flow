@@ -50,12 +50,12 @@ def format_topic(topic, topic_formatters=None):
     return topic
 
 
-def match_topic(original_topic, regex=None, topic=None):
+def match_topic(source_topic, regex=None, rule_topic=None):
 
-    if regex and not re.match(regex, topic):
+    if regex and not re.match(regex, source_topic):
         return False
 
-    if topic and original_topic != topic:
+    if rule_topic and rule_topic != source_topic:
         return False
 
     return True
