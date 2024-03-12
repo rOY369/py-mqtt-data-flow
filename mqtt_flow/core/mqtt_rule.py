@@ -11,7 +11,7 @@ class MQTTRule:
             rule_config (dict): Configuration for the rule, including conditions and task information.
         """
         self.logger = get_logger("mqtt_rule")
-        self.rule_name = rule_config.get("rule_name")
+        self.rule_name = rule_config.get("name")
         self.source_client_name = rule_config.get("source_client_name")
         self.regex = rule_config.get("regex")
         self.topic = rule_config.get("topic")

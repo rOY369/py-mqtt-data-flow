@@ -178,6 +178,7 @@ class MQTTFlow:
             )
 
             for rule_name, rule in self._rules.get(client_name, {}).items():
+                self.logger.debug(f"Regex : {rule.regex}")
                 if rule.is_rule_matched(topic, payload):
                     self.logger.info(
                         f"Rule {rule_name} matched for {client_name}"
