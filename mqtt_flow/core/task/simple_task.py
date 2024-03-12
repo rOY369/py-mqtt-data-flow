@@ -1,10 +1,9 @@
 import abc
 
 
-class MQTTFlowTask(metaclass=abc.ABCMeta):
-    def __init__(self, topic, payload, userdata, task_config):
-        self.topic = topic
-        self.payload = payload
+class SimpleTask(metaclass=abc.ABCMeta):
+
+    def __init__(self, userdata, task_config):
         self._userdata = userdata
         self.task_config = task_config
         self.name = task_config.get("name")
@@ -19,7 +18,7 @@ class MQTTFlowTask(metaclass=abc.ABCMeta):
         )
 
     def __str__(self):
-        return f"Task {self.name} with topic {self.topic} and payload {self.payload}"
+        return f"Task {self.name}"
 
     def execute_task(self, task, task_queue_name):
         task_queue = self._tasks_queues[task_queue_name]

@@ -1,4 +1,4 @@
-from mqtt_flow.core.task.task import MQTTFlowTask
+from mqtt_flow.core.task.flow_task import MQTTFlowTask
 from mqtt_flow.utils.helpers import format_topic
 
 

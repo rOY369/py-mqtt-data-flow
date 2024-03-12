@@ -8,6 +8,7 @@ from mqtt_flow.core.mqtt_callbacks import (
 from mqtt_flow.core.tasks_executor import TasksExecutor
 import queue
 import threading
+from mqtt_flow.core.task.task_loader import load_task_class
 from mqtt_flow.utils.helpers import get_logger
 from mqtt_flow.peristence import MQTTPersistence
 
@@ -31,6 +32,29 @@ class MQTTFlow:
             self.config.copy().get("tasks_queues", []),
             self.config.copy().get("pools", []),
         )
+
+    def submit_task(
+        self,
+        client_name,
+        task_class,
+        task_queue_name,
+        task_config=None,
+        task_args=None,
+        task_kwargs=None,
+    ):
+        if task_args is None:
+            task_args = tuple()
+        if task_kwargs is None:
+            task_kwargs = {}
+
+        for client_config in self.config.get("mqtt_clients", []):
+            if client_config.get("client_name") == client_name:
+                userdata = client_config.get("userdata")
+
+        task = task_class(userdata, task_config, *task_args, **task_kwargs)
+
+        task_queue = self._tasks_queues[task_queue_name]
+        task_queue.put(task)
 
     def _create_rules(self):
         rules = {}
@@ -154,11 +178,11 @@ class MQTTFlow:
                     self.logger.info(
                         f"Incoming Message to {client_name}: {message['topic']} -> {message['payload']}"
                     )
-                    task_class = rule.task_class
+                    task_class = load_task_class(rule.task_config)
 
                     if task_class:
                         task = task_class(
-                            topic, payload, userdata, rule.task_config
+                            userdata, rule.task_config, topic, payload
                         )
                         self._tasks_queues[rule.queue_name].put(task)
 
