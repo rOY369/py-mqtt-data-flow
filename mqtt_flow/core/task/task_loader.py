@@ -1,7 +1,7 @@
 import importlib
 
 
-def load_task_class(task_config):
+def load_task_class(task_class_path):
     """
     Dynamically loads the Task class from the given path.
 
@@ -11,9 +11,8 @@ def load_task_class(task_config):
     Returns:
         class: The Task class.
     """
-    task_path = task_config.get("path")
-    if task_path:
-        module_name, class_name = task_path.rsplit(".", 1)
+    if task_class_path:
+        module_name, class_name = task_class_path.rsplit(".", 1)
         module = importlib.import_module(module_name)
 
         try:

@@ -178,7 +178,7 @@ class MQTTFlow:
                     self.logger.info(
                         f"Incoming Message to {client_name}: {message['topic']} -> {message['payload']}"
                     )
-                    task_class = load_task_class(rule.task_config)
+                    task_class = load_task_class(rule.task_config.get("path"))
 
                     if task_class:
                         task = task_class(
