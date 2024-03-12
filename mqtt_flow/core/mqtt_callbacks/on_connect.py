@@ -2,15 +2,6 @@ from mqtt_flow.utils.helpers import get_logger
 
 
 class OnConnectCallback:
-    def __init__(self, sub_topics):
-        """
-        Initializes the OnConnectCallback instance.
-        Args:
-            sub_topics (list of tuples): A list of topic tuples to subscribe to upon connection.
-            Each tuple contains the topic name and the QoS, e.g., [('topic1', 0), ('topic2', 1)].
-        """
-        self.sub_topics = sub_topics
-        self.logger = get_logger("mqtt_on_connect_callback")
 
     @classmethod
     def get_callback(cls, sub_topics=None):
@@ -24,8 +15,7 @@ class OnConnectCallback:
         if sub_topics is None:
             sub_topics = []
 
-        instance = cls(sub_topics)
-        logger = instance.logger
+        logger = get_logger("on_connect_mqtt_callback")
 
         def on_connect(client, userdata, flags, rc):
             """
@@ -39,8 +29,9 @@ class OnConnectCallback:
             logger.info(
                 f"MQTT client {client._client_id} connected with result code {rc}"
             )
-            for topic in instance.sub_topics:
-                logger.debug(f"{client._client_id} Subscribing to {topic}")
+            logger.info("Sub topics : ", sub_topics)
+            for topic in sub_topics:
+                logger.info(f"{client._client_id} Subscribing to {topic}")
                 client.subscribe(topic)
 
         return on_connect
