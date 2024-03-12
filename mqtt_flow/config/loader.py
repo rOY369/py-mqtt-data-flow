@@ -27,14 +27,14 @@ class MQTTConfigLoader:
                 client_config["client_id"] = client_config["client_name"]
 
         if userdata:
-            for client_name, userdata in userdata.items():
-                self.register_userdata(client_name, userdata)
+            for client_name, client_userdata in userdata.items():
+                self.register_userdata(client_name, client_userdata)
         if sub_topics:
-            for client_name, sub_topics in sub_topics.items():
-                self.register_sub_topics(client_name, sub_topics)
+            for client_name, client_sub_topics in sub_topics.items():
+                self.register_sub_topics(client_name, client_sub_topics)
         if persistence:
-            for client_name, persistence in persistence.items():
-                self.register_persistence(client_name, persistence)
+            for client_name, client_persistence in persistence.items():
+                self.register_persistence(client_name, client_persistence)
 
         self.make_client_id_unique()
 
