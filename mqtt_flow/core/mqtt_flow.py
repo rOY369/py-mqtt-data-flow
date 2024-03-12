@@ -35,10 +35,7 @@ class MQTTFlow:
 
     def submit_task(
         self,
-        client_name,
-        task_class,
-        task_queue_name,
-        task_config=None,
+        task_name,
         task_args=None,
         task_kwargs=None,
     ):
@@ -47,8 +44,18 @@ class MQTTFlow:
         if task_kwargs is None:
             task_kwargs = {}
 
+        task_config = self.config.get("tasks", {}).get(task_name)
+        if not task_config:
+            self.logger.error(f"Task '{task_name}' not found")
+            return
+
+        task_config["name"] = task_name
+        task_class = load_task_class(task_config.get("path"))
+        task_queue_name = task_config.get("queue_name")
+        client_for_userdata = task_config.get("client_for_userdata")
+
         for client_config in self.config.get("mqtt_clients", []):
-            if client_config.get("client_name") == client_name:
+            if client_config.get("client_name") == client_for_userdata:
                 userdata = client_config.get("userdata")
 
         task = task_class(userdata, task_config, *task_args, **task_kwargs)
@@ -178,13 +185,17 @@ class MQTTFlow:
                     self.logger.info(
                         f"Incoming Message to {client_name}: {message['topic']} -> {message['payload']}"
                     )
-                    task_class = load_task_class(rule.task_config.get("path"))
+                    task_config = self.config.get("tasks", {}).get(
+                        rule.task_name
+                    )
+                    task_config["name"] = rule.task_name
+                    task_class = load_task_class(task_config.get("path"))
 
                     if task_class:
                         task = task_class(
-                            userdata, rule.task_config, topic, payload
+                            userdata, task_config, topic, payload
                         )
-                        self._tasks_queues[rule.queue_name].put(task)
+                        self._tasks_queues[task_config["queue_name"]].put(task)
 
     def _outgoing_msg_queue_consumer(self, client_name):
         outgoing_queue = self._clients_queues[client_name]["outgoing"]

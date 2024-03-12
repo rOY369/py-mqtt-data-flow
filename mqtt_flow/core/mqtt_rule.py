@@ -16,8 +16,7 @@ class MQTTRule:
         self.regex = rule_config.get("regex")
         self.topic = rule_config.get("topic")
         self.condition = rule_config.get("condition")
-        self.task_config = rule_config.get("task")
-        self.queue_name = self.task_config.get("queue_name")
+        self.task_name = rule_config.get("task")
 
     def is_rule_matched(self, topic, payload):
         """
