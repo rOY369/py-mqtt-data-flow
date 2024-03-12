@@ -40,7 +40,7 @@ class OnConnectCallback:
                 f"MQTT client {client._client_id} connected with result code {rc}"
             )
             for topic in instance.sub_topics:
-                logger.info(f"{client._client_id} Subscribing to {topic}")
+                logger.debug(f"{client._client_id} Subscribing to {topic}")
                 client.subscribe(topic)
 
         return on_connect
