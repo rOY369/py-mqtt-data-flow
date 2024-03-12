@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import yaml
 import uuid
+import re
 
 
 class MQTTConfigLoader:
@@ -103,18 +104,30 @@ class MQTTConfigLoader:
         class CustomLoader(yaml.SafeLoader):
             pass
 
+        def interpolate_variables(value, variables):
+            """Interpolate variable placeholders in the given value with their actual values."""
+
+            # Match placeholders like {VAR_NAME} and replace them with variable values
+            def replace(match):
+                var_name = match.group(1)
+                if var_name not in variables:
+                    raise ValueError(f"Unknown variable: {var_name}")
+
+                return variables.get(var_name)
+
+            interpolated_value = re.sub(r"\{(\w+)\}", replace, value)
+            return interpolated_value
+
         def var_constructor(loader, node):
-            """Extracts the custom variable from the node's value."""
+            """Custom constructor for custom variables with support for interpolation."""
             value = loader.construct_scalar(node)
-            return self.custom_vars.get(value, f"Undefined variable: {value}")
+            return interpolate_variables(value, self.custom_vars)
 
         def env_constructor(loader, node):
-            """Extracts the environment variable from the node's value."""
+            """Custom constructor for environment variables with support for interpolation."""
             value = loader.construct_scalar(node)
-            env_var, default_value = value.split(" ", 1)[0], None
-            if " " in value:  # Check if there's a default value provided
-                env_var, default_value = value.split(" ", 1)
-            return os.getenv(env_var.strip("${}"), default_value)
+            env_vars = {key: os.getenv(key, "") for key in os.environ}
+            return interpolate_variables(value, env_vars)
 
         CustomLoader.add_constructor("!VAR", var_constructor)
         CustomLoader.add_constructor("!ENV", env_constructor)
