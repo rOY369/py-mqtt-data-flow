@@ -274,6 +274,9 @@ class MQTTClient:
             topic (str): Topic where the message will be published.
             payload (str, int, float): Payload of the message.
         """
+        if isinstance(payload, dict) or isinstance(payload, list):
+            payload = json.dumps(payload)
+
         if not hasattr(self, "client"):
             self.log.warning("MQTT client not initialized.")
             return None
