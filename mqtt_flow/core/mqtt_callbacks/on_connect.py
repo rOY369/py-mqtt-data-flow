@@ -29,7 +29,7 @@ class OnConnectCallback:
             logger.info(
                 f"MQTT client {client._client_id} connected with result code {rc}"
             )
-            logger.info("Sub topics : ", sub_topics)
+            logger.info(f"Sub topics :  {sub_topics}")
             for topic in sub_topics:
                 logger.info(f"{client._client_id} Subscribing to {topic}")
                 client.subscribe(topic)
