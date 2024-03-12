@@ -77,7 +77,9 @@ class MQTTConfigLoader:
     def register_sub_topics(self, client_name, topics):
         for client_config in self.config.get("mqtt_clients", []):
             if client_config.get("client_name") == client_name:
-                client_config.get("sub_topics", []).extend(topics)
+                if "sub_topics" not in client_config:
+                    client_config["sub_topics"] = []
+                client_config["sub_topics"].extend(topics)
 
     def register_userdata(self, client_name, userdata):
         for client_config in self.config.get("mqtt_clients", []):
