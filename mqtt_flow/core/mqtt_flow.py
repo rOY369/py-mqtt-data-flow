@@ -8,6 +8,7 @@ from mqtt_flow.core.mqtt_callbacks import (
 from mqtt_flow.core.tasks_executor import TasksExecutor
 import queue
 import threading
+from mqtt_flow.core._task import Task
 from mqtt_flow.core.task.task_loader import load_task_class
 from mqtt_flow.utils.helpers import get_logger
 from mqtt_flow.peristence import MQTTPersistence
@@ -25,6 +26,7 @@ class MQTTFlow:
         self._clients_queues = self._create_mqtt_clients_queues()
         self._tasks_queues = self._create_tasks_queues()
         self._rules = self._create_rules()
+        self._tasks = self._create_tasks()
         self._register_clients_base_userdata()
         self._clients = self._create_mqtt_clients()
         self._tasks_executor = TasksExecutor(
@@ -33,35 +35,11 @@ class MQTTFlow:
             self.config.copy().get("pools", []),
         )
 
-    def submit_task(
-        self,
-        task_name,
-        task_args=None,
-        task_kwargs=None,
-    ):
-        if task_args is None:
-            task_args = tuple()
-        if task_kwargs is None:
-            task_kwargs = {}
-
-        task_config = self.config.get("tasks", {}).get(task_name)
-        if not task_config:
-            self.logger.error(f"Task '{task_name}' not found")
-            return
-
-        task_config["name"] = task_name
-        task_class = load_task_class(task_config.get("path"))
-        task_queue_name = task_config.get("queue_name")
-        client_for_userdata = task_config.get("client_for_userdata")
-
-        for client_config in self.config.get("mqtt_clients", []):
-            if client_config.get("client_name") == client_for_userdata:
-                userdata = client_config.get("userdata")
-
-        task = task_class(userdata, task_config, *task_args, **task_kwargs)
-
-        task_queue = self._tasks_queues[task_queue_name]
-        task_queue.put(task)
+    def _create_tasks(self):
+        tasks = {}
+        for task_name in self.config.get("tasks", {}):
+            tasks[task_name] = Task(self.config, task_name, self._tasks_queues)
+        return tasks
 
     def _create_rules(self):
         rules = {}
@@ -84,6 +62,7 @@ class MQTTFlow:
             client_config["userdata"]["_client_name"] = client_name
             client_config["userdata"]["_tasks_queues"] = self._tasks_queues
             client_config["userdata"]["_clients_queues"] = self._clients_queues
+            client_config["userdata"]["_tasks"] = self._tasks
 
     def _create_mqtt_clients_queues(self):
         queues = {}
@@ -185,17 +164,9 @@ class MQTTFlow:
                     self.logger.info(
                         f"Incoming Message to {client_name}: {message['topic']} -> {message['payload']}"
                     )
-                    task_config = self.config.get("tasks", {}).get(
-                        rule.task_name
+                    self._tasks[rule.task_name].submit(
+                        userdata=userdata, task_args=(topic, payload)
                     )
-                    task_config["name"] = rule.task_name
-                    task_class = load_task_class(task_config.get("path"))
-
-                    if task_class:
-                        task = task_class(
-                            userdata, task_config, topic, payload
-                        )
-                        self._tasks_queues[task_config["queue_name"]].put(task)
 
     def _outgoing_msg_queue_consumer(self, client_name):
         outgoing_queue = self._clients_queues[client_name]["outgoing"]
@@ -207,6 +178,11 @@ class MQTTFlow:
                 f"Outgoing Message from {client_name}: {message['topic']} -> {message['payload']}"
             )
             client.publish(message["topic"], message["payload"])
+
+    def submit_task(self, task_name, task_args=None, task_kwargs=None):
+        self._tasks[task_name].submit(
+            task_args=task_args, task_kwargs=task_kwargs
+        )
 
     def start(self):
         """Start all MQTT client connections."""
