@@ -2,10 +2,12 @@ import logging
 import re
 from mqtt_flow.config.loader import MQTTConfigLoader
 
+global LOGGER
 LOGGER = None
 
 
 def set_logger(logger):
+    global LOGGER
     LOGGER = logger
 
 
