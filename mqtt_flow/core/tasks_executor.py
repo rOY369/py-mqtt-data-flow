@@ -32,7 +32,7 @@ class TasksExecutor:
     def consume_task_queue(self, task_queue, pool):
         while True:
             task = task_queue.get()
-            self.logger.info(f"Executing Task {task}")
+            self.logger.debug(f"Executing Task {task}")
             if pool.resource_available:
                 pool.submit(task.process)
 

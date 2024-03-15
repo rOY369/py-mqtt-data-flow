@@ -159,11 +159,11 @@ class MQTTFlow:
 
             for rule_name, rule in self._rules.get(client_name, {}).items():
                 if rule.is_rule_matched(topic, payload):
-                    self.logger.info(
+                    self.logger.debug(
                         f"Rule {rule_name} matched for {client_name}"
                     )
-                    self.logger.info(
-                        f"Incoming Message to {client_name}: {message['topic']} -> {message['payload']}"
+                    self.logger.debug(
+                        f"Client {client_name} Incoming Message : {message['topic']} -> {message['payload']}"
                     )
                     self._tasks[rule.task_name].submit(
                         userdata=userdata, task_args=(topic, payload)
@@ -175,8 +175,8 @@ class MQTTFlow:
 
         while True:
             message = outgoing_queue.get()
-            self.logger.info(
-                f"Outgoing Message from {client_name}: {message['topic']} -> {message['payload']}"
+            self.logger.debug(
+                f"Client {client_name} Outgoing Message : {message['topic']} -> {message['payload']}"
             )
             client.publish(message["topic"], message["payload"])
 
