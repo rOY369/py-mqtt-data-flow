@@ -2,24 +2,35 @@ import logging
 import re
 from mqtt_flow.config.loader import MQTTConfigLoader
 
+LOGGER = None
+
+
+def set_logger(logger):
+    LOGGER = logger
+
 
 def get_logger(name, level=None):
-    loggers = MQTTConfigLoader.loggers
-    default_log_level = MQTTConfigLoader.default_log_level
+    global LOGGER
 
-    if not level:
-        if name in loggers and "level" in loggers[name]:
-            level = loggers[name]["level"]
-        else:
-            level = default_log_level
+    if LOGGER:
+        return LOGGER
+    else:
+        loggers = MQTTConfigLoader.loggers
+        default_log_level = MQTTConfigLoader.default_log_level
 
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    )
-    logger = logging.getLogger(name)
-    logger.setLevel(level)
-    return logger
+        if not level:
+            if name in loggers and "level" in loggers[name]:
+                level = loggers[name]["level"]
+            else:
+                level = default_log_level
+
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        )
+        logger = logging.getLogger(name)
+        logger.setLevel(level)
+        return logger
 
 
 def format_topic(topic, topic_formatters=None):

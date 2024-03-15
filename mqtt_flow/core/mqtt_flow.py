@@ -21,6 +21,7 @@ from mqtt_flow.peristence import MQTTPersistence
 
 class MQTTFlow:
     def __init__(self, config):
+
         self.logger = get_logger("mqtt_flow")
         self.config = config
         self._clients_queues = self._create_mqtt_clients_queues()
