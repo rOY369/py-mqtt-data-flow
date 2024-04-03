@@ -31,10 +31,13 @@ class TasksExecutor:
 
     def consume_task_queue(self, task_queue, pool):
         while True:
-            task = task_queue.get()
-            self.logger.debug(f"Executing Task {task}")
-            if pool.resource_available:
-                pool.submit(task.process)
+            try:
+                task = task_queue.get()
+                self.logger.debug(f"Executing Task {task}")
+                if pool.resource_available:
+                    pool.submit(task.process)
+            except Exception:
+                self.logger.exception("Exception in Task Consumer")
 
     def start(self):
         for task_queue_name, task_queue in self.tasks_queues.items():

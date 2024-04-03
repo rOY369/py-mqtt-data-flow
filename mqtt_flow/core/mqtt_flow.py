@@ -148,37 +148,43 @@ class MQTTFlow:
         incoming_queue = self._clients_queues[client_name]["incoming"]
 
         while True:
-            message = incoming_queue.get()
-            topic = message["topic"]
-            payload = message["payload"]
-            userdata = message["userdata"]
+            try:
+                message = incoming_queue.get()
+                topic = message["topic"]
+                payload = message["payload"]
+                userdata = message["userdata"]
 
-            self.logger.debug(
-                f"Incoming Message : {message['topic']} -> {message['payload']}"
-            )
+                self.logger.debug(
+                    f"Incoming Message : {message['topic']} -> {message['payload']}"
+                )
 
-            for rule_name, rule in self._rules.get(client_name, {}).items():
-                if rule.is_rule_matched(topic, payload):
-                    self.logger.debug(
-                        f"Rule {rule_name} matched for {client_name}"
-                    )
-                    self.logger.debug(
-                        f"Client {client_name} Incoming Message : {message['topic']} -> {message['payload']}"
-                    )
-                    self._tasks[rule.task_name].submit(
-                        userdata=userdata, task_args=(topic, payload)
-                    )
+                for rule_name, rule in self._rules.get(client_name, {}).items():
+                    if rule.is_rule_matched(topic, payload):
+                        self.logger.debug(
+                            f"Rule {rule_name} matched for {client_name}"
+                        )
+                        self.logger.debug(
+                            f"Client {client_name} Incoming Message : {message['topic']} -> {message['payload']}"
+                        )
+                        self._tasks[rule.task_name].submit(
+                            userdata=userdata, task_args=(topic, payload)
+                        )
+            except Exception:
+                self.logger.exception("Exception in Incoming Message Queue Consumer")
 
     def _outgoing_msg_queue_consumer(self, client_name):
         outgoing_queue = self._clients_queues[client_name]["outgoing"]
         client = self._clients[client_name]
 
         while True:
-            message = outgoing_queue.get()
-            self.logger.debug(
-                f"Client {client_name} Outgoing Message : {message['topic']} -> {message['payload']}"
-            )
-            client.publish(message["topic"], message["payload"])
+            try:
+                message = outgoing_queue.get()
+                self.logger.debug(
+                    f"Client {client_name} Outgoing Message : {message['topic']} -> {message['payload']}"
+                )
+                client.publish(message["topic"], message["payload"])
+            except Exception:
+                self.logger.exception("Exception in Outgoing Message Queue Consumer")
 
     def submit_task(self, task_name, task_args=None, task_kwargs=None):
         self._tasks[task_name].submit(
