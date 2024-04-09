@@ -71,6 +71,9 @@ class Persistence:
             multithreading=True,
         )
 
+    def get_size(self):
+        return self._pqueue.qsize()
+
     def put_batch(self):
         """
         Puts the given batch into the given persist queue to be uploaded later.
