@@ -158,7 +158,9 @@ class MQTTFlow:
                     f"Incoming Message : {message['topic']} -> {message['payload']}"
                 )
 
-                for rule_name, rule in self._rules.get(client_name, {}).items():
+                for rule_name, rule in self._rules.get(
+                    client_name, {}
+                ).items():
                     if rule.is_rule_matched(topic, payload):
                         self.logger.debug(
                             f"Rule {rule_name} matched for {client_name}"
@@ -170,7 +172,9 @@ class MQTTFlow:
                             userdata=userdata, task_args=(topic, payload)
                         )
             except Exception:
-                self.logger.exception("Exception in Incoming Message Queue Consumer")
+                self.logger.exception(
+                    "Exception in Incoming Message Queue Consumer"
+                )
 
     def _outgoing_msg_queue_consumer(self, client_name):
         outgoing_queue = self._clients_queues[client_name]["outgoing"]
@@ -182,9 +186,16 @@ class MQTTFlow:
                 self.logger.debug(
                     f"Client {client_name} Outgoing Message : {message['topic']} -> {message['payload']}"
                 )
-                client.publish(message["topic"], message["payload"])
+                client.publish(
+                    message["topic"],
+                    message["payload"],
+                    *message.get("args", []),
+                    **message.get("kwargs", {}),
+                )
             except Exception:
-                self.logger.exception("Exception in Outgoing Message Queue Consumer")
+                self.logger.exception(
+                    "Exception in Outgoing Message Queue Consumer"
+                )
 
     def submit_task(self, task_name, task_args=None, task_kwargs=None):
         self._tasks[task_name].submit(

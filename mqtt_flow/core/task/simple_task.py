@@ -13,9 +13,14 @@ class SimpleTask(metaclass=abc.ABCMeta):
         self._clients_queues = self._userdata.get("_clients_queues")
         self._tasks = self._userdata.get("_tasks")
 
-    def publish_message(self, client_name, topic, payload):
+    def publish_message(self, client_name, topic, payload, *args, **kwargs):
         self._clients_queues[client_name]["outgoing"].put(
-            {"topic": topic, "payload": payload}
+            {
+                "topic": topic,
+                "payload": payload,
+                "args": args,
+                "kwargs": kwargs,
+            }
         )
 
     def __str__(self):
