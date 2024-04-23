@@ -22,7 +22,7 @@ class RelayMessage(MQTTFlowTask):
     def process(self):
 
         topic = (
-            format_topic(topic, self.topic_formatters)
+            format_topic(self.topic, self.topic_formatters)
             if self.topic_to_publish is None
             else self.topic_to_publish
         )
