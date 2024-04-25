@@ -60,25 +60,26 @@ class Persistence:
         )
         self.batch = []
         self._batch_lock = threading.Lock()
-        self._pqueue = None
+        self._main_pqueue = None
+        self._backup_pqueue = None
 
         try:
-            self._pqueue = self._create_persistence_queue(self.main_path)
+            self._main_pqueue = self._create_persistence_queue(self.main_path)
         except:
             self.logger.warning(
-                f"Failed to create persistence queue in {self.backup_path}"
+                f"Failed to create main persistence queue in {self.main_path}"
             )
             if self.backup_path:
                 try:
-                    self._pqueue = self._create_persistence_queue(
+                    self._backup_pqueue = self._create_persistence_queue(
                         self.backup_path
                     )
                 except:
                     self.logger.warning(
-                        f"Failed to create persistence queue in {self.backup_path}"
+                        f"Failed to create backup persistence queue in {self.backup_path}"
                     )
 
-        if self._pqueue is None:
+        if self._main_pqueue is None and self._backup_pqueue is None:
             raise PersistenceQueueError("Failed to create persistence queue")
 
     @retry(exceptions=(Exception,), **DEFAULT_INIT_RETRY_CONFIG)
@@ -89,8 +90,17 @@ class Persistence:
             multithreading=True,
         )
 
-    def get_size(self):
-        return self._pqueue.qsize()
+    def get_main_pqueue_size(self):
+        if self._main_pqueue is None:
+            return 0
+
+        return self._main_pqueue.qsize()
+
+    def get_backup_pqueue_size(self):
+        if self._backup_pqueue is None:
+            return 0
+
+        return self._backup_pqueue.qsize()
 
     def put_batch(self):
         """
@@ -105,11 +115,18 @@ class Persistence:
             batch = json.dumps(batch)
 
         try:
-            self._pqueue.put_nowait(batch)
+            self._main_pqueue.put_nowait(batch)
         except Exception:
             self.logger.warning(
-                "Failed to put batch in persist queue", exc_info=True
+                "Failed to put batch in main persist queue", exc_info=True
             )
+            try:
+                self._backup_pqueue.put_nowait(batch)
+            except Exception:
+                self.logger.warning(
+                    "Failed to put batch in backup persist queue",
+                    exc_info=True,
+                )
 
         self.batch = []
 
@@ -131,7 +148,7 @@ class Persistence:
         exceptions=(UploadError,),
         **DEFAULT_BATCH_RETRY_CONFIG,
     )
-    def upload_batch(self, uploader):
+    def upload_batch(self, pqueue, uploader):
         """
         Gets batch from the persist queue of the given queue type and uploads
         it via the given uploader.
@@ -139,11 +156,13 @@ class Persistence:
             uploader(): instance of uploader.
         """
         try:
-            batch = self._pqueue.get_nowait()
+            batch = pqueue.get_nowait()
         except persistqueue.exceptions.Empty:
             self.logger.debug(f"persist_queue_empty for {self.name}")
         else:
-            self.logger.info(f"persist_queue_upload_try for {self.name}")
+            self.logger.info(
+                f"persist_queue_upload_try for {self.name} : {pqueue}"
+            )
 
             try:
                 batch_to_upload = json.loads(batch)
@@ -168,7 +187,7 @@ class Persistence:
                     f"persist_queue_upload_success for {self.name}"
                 )
 
-            self._pqueue.task_done()
+            pqueue.task_done()
 
     def start(self, uploader):
         threading.Thread(target=self.start_upload, args=(uploader,)).start()
@@ -178,5 +197,7 @@ class Persistence:
         while True:
 
             if uploader.is_connected():
-                self.upload_batch(uploader)
+                self.upload_batch(self._main_pqueue, uploader)
+                self.upload_batch(self._backup_pqueue, uploader)
+
             time.sleep(self.upload_interval)
