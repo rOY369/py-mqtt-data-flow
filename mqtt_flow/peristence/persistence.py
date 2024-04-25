@@ -197,7 +197,10 @@ class Persistence:
         while True:
 
             if uploader.is_connected():
-                self.upload_batch(self._main_pqueue, uploader)
-                self.upload_batch(self._backup_pqueue, uploader)
+                if self._main_pqueue is not None:
+                    self.upload_batch(self._main_pqueue, uploader)
+
+                if self._backup_pqueue is not None:
+                    self.upload_batch(self._backup_pqueue, uploader)
 
             time.sleep(self.upload_interval)
