@@ -161,7 +161,7 @@ class Persistence:
             self.logger.debug(f"persist_queue_empty for {self.name}")
         else:
             self.logger.info(
-                f"persist_queue_upload_try for {self.name} : {pqueue}"
+                f"persist_queue_upload_try for {self.name}"
             )
 
             try:
