@@ -12,6 +12,7 @@ from mqtt_flow.core._task import Task
 from mqtt_flow.core.task.task_loader import load_task_class
 from mqtt_flow.utils.helpers import get_logger
 from mqtt_flow.peristence import MQTTPersistence
+from mqtt_flow.peristence import PersistenceQueueError
 
 
 # TODO trigger in persistence (application level)
@@ -106,7 +107,12 @@ class MQTTFlow:
         if not persistence:
             persistence_config = client_config.get("persistence_config")
             if persistence_config:
-                persistence = MQTTPersistence(persistence_config)
+                try:
+                    persistence = MQTTPersistence(persistence_config)
+                except PersistenceQueueError:
+                    self.logger.warning(
+                        f"Failed to initialise persistence for client {client_config.get('client_name')}"
+                    )
 
         return MQTTClient(
             **{

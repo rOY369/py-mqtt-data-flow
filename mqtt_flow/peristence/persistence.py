@@ -10,6 +10,10 @@ class UploadError(Exception):
     pass
 
 
+class PersistenceQueueError(Exception):
+    pass
+
+
 class MockPersistence:
 
     def append_to_batch(self, data_point):
@@ -56,12 +60,26 @@ class Persistence:
         )
         self.batch = []
         self._batch_lock = threading.Lock()
+        self._pqueue = None
 
         try:
             self._pqueue = self._create_persistence_queue(self.main_path)
         except:
+            self.logger.warning(
+                f"Failed to create persistence queue in {self.backup_path}"
+            )
             if self.backup_path:
-                self._pqueue = self._create_persistence_queue(self.backup_path)
+                try:
+                    self._pqueue = self._create_persistence_queue(
+                        self.backup_path
+                    )
+                except:
+                    self.logger.warning(
+                        f"Failed to create persistence queue in {self.backup_path}"
+                    )
+
+        if self._pqueue is None:
+            raise PersistenceQueueError("Failed to create persistence queue")
 
     @retry(exceptions=(Exception,), **DEFAULT_INIT_RETRY_CONFIG)
     def _create_persistence_queue(self, path):
@@ -86,9 +104,14 @@ class Persistence:
         if isinstance(batch, list) or isinstance(batch, dict):
             batch = json.dumps(batch)
 
-        self._pqueue.put_nowait(batch)
-
-        self.batch = []
+        try:
+            self._pqueue.put_nowait(batch)
+        except Exception:
+            self.logger.warning(
+                "Failed to put batch in persist queue", exc_info=True
+            )
+        else:
+            self.batch = []
 
     def append_to_batch(self, data_point):
         with self._batch_lock:
