@@ -110,8 +110,8 @@ class Persistence:
             self.logger.warning(
                 "Failed to put batch in persist queue", exc_info=True
             )
-        else:
-            self.batch = []
+
+        self.batch = []
 
     def append_to_batch(self, data_point):
         with self._batch_lock:
