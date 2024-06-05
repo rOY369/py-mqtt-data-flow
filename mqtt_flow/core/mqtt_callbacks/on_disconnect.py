@@ -19,7 +19,7 @@ class OnDisconnectCallback:
                 userdata: The private user data as set in Client() or userdata_set().
                 rc: The connection result.
             """
-            logger.critical(
+            logger.warning(
                 f"MQTT client {client._client_id} disconnected with result code {rc}"
             )
 
