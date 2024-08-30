@@ -13,7 +13,7 @@ from mqtt_flow.core.task.task_loader import load_task_class
 from mqtt_flow.utils.helpers import get_logger
 from mqtt_flow.peristence import MQTTPersistence
 from mqtt_flow.peristence import PersistenceQueueError
-
+import time
 
 # TODO trigger in persistence (application level)
 # TODO config, readme
@@ -21,6 +21,8 @@ from mqtt_flow.peristence import PersistenceQueueError
 
 
 class MQTTFlow:
+    PUBLISH_DELAY_IN_SECONDS = 0.005
+
     def __init__(self, config):
 
         self.logger = get_logger("mqtt_flow")
@@ -198,6 +200,7 @@ class MQTTFlow:
                     *message.get("args", []),
                     **message.get("kwargs", {}),
                 )
+                time.sleep(self.PUBLISH_DELAY_IN_SECONDS)
             except Exception:
                 self.logger.exception(
                     "Exception in Outgoing Message Queue Consumer"
