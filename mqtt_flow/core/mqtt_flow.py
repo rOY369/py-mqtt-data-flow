@@ -205,9 +205,9 @@ class MQTTFlow:
                 msg_counter += 1
 
                 # Check if the counter has reached n
-                if message_counter >= self.OUTGOING_MESSAGES_BEFORE_WAIT:
+                if msg_counter >= self.OUTGOING_MESSAGES_BEFORE_WAIT:
                     time.sleep(self.PUBLISH_DELAY_IN_SECONDS * 2)
-                    message_counter = 0
+                    msg_counter = 0
                 else:
                     time.sleep(self.PUBLISH_DELAY_IN_SECONDS)
             except Exception:
