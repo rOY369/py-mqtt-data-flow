@@ -22,6 +22,7 @@ import time
 
 class MQTTFlow:
     PUBLISH_DELAY_IN_SECONDS = 0.005
+    OUTGOING_MESSAGES_BEFORE_WAIT = 20
 
     def __init__(self, config):
 
@@ -187,7 +188,7 @@ class MQTTFlow:
     def _outgoing_msg_queue_consumer(self, client_name):
         outgoing_queue = self._clients_queues[client_name]["outgoing"]
         client = self._clients[client_name]
-
+        msg_counter = 0
         while True:
             try:
                 message = outgoing_queue.get()
@@ -200,7 +201,15 @@ class MQTTFlow:
                     *message.get("args", []),
                     **message.get("kwargs", {}),
                 )
-                time.sleep(self.PUBLISH_DELAY_IN_SECONDS)
+
+                msg_counter += 1
+
+                # Check if the counter has reached n
+                if message_counter >= self.OUTGOING_MESSAGES_BEFORE_WAIT:
+                    time.sleep(self.PUBLISH_DELAY_IN_SECONDS * 2)
+                    message_counter = 0
+                else:
+                    time.sleep(self.PUBLISH_DELAY_IN_SECONDS)
             except Exception:
                 self.logger.exception(
                     "Exception in Outgoing Message Queue Consumer"
