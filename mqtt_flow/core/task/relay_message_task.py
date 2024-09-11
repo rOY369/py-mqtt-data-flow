@@ -10,6 +10,7 @@ class RelayMessage(MQTTFlowTask):
         self.client_to_publish = self.task_config.get("client_to_publish")
         self.topic_to_publish = self.task_config.get("topic_to_publish")
         self.persist = self.task_config.get("persist", False)
+        self.qos = self.task_config.get("qos", 0)
         self.log = self.task_config.get("log", False)
 
         if not self.topic_to_publish:
@@ -31,7 +32,11 @@ class RelayMessage(MQTTFlowTask):
         )
         payload = self.format_payload()
         self.publish_message(
-            self.client_to_publish, topic, payload, persist=self.persist
+            self.client_to_publish,
+            topic,
+            payload,
+            persist=self.persist,
+            qos=self.qos,
         )
 
         if self.log:
