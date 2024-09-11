@@ -266,7 +266,7 @@ class MQTTClient:
         for topic in topics:
             self.client.subscribe(topic)
 
-    def publish(self, topic, payload, persist=False):
+    def publish(self, topic, payload, persist=False, qos=0):
         """
         Publishes a message immediately to the specified topic.
 
@@ -292,7 +292,7 @@ class MQTTClient:
                 self.log.debug(
                     f"Outgoing Message from {self.client_name}: {topic} -> {payload}"
                 )
-                message_info = self.client.publish(topic, payload)
+                message_info = self.client.publish(topic, payload, qos=qos)
                 return message_info
             except OSError as e:
                 self.log.warning(f"Failed to publish message: {e}")
