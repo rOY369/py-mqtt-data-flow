@@ -200,7 +200,7 @@ class MQTTFlow:
                     **message.get("kwargs", {}),
                 )
 
-                time.sleep(self.PUBLISH_DELAY_IN_SECONDS)
+                # time.sleep(self.PUBLISH_DELAY_IN_SECONDS)
             except Exception:
                 self.logger.exception(
                     "Exception in Outgoing Message Queue Consumer"
