@@ -88,7 +88,7 @@ class MQTTClient:
         queue_size=5,
         batch_size=5,
         publish_interval=60,
-        clean_session=False,
+        clean_session=True,
         ssl_config=None,
         userdata=None,
         on_connect=Mock(),
