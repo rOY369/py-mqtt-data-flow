@@ -21,7 +21,7 @@ import threading
 from queue import Queue
 import json
 from unittest.mock import Mock
-from mqtt_flow.core.mqtt_callbacks.on_log import on_log
+from mqtt_flow.core.mqtt_callbacks.on_log import OnLogCallback
 
 from mqtt_flow.utils.helpers import get_logger
 from mqtt_flow.peristence import MockPersistence
@@ -254,6 +254,7 @@ class MQTTClient:
         self.client.on_message = self.on_message
         self.client.on_disconnect = self.on_disconnect
         if self.on_log_callback_enable:
+            on_log = OnLogCallback.get_callback()
             self.client.on_log = on_log
         try:
             self.client.connect(self.server, self.port, self.keepalive)
