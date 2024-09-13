@@ -234,6 +234,7 @@ class MQTTClient:
             userdata=self.userdata,
             clean_session=self.clean_session,
         )
+        self.client.max_inflight_messages_set(10000)
         if self.ssl_config:
             ssl_context = self._prepare_ssl_context(
                 self.ssl_config.get("alpn_protocol"),
