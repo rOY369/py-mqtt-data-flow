@@ -194,13 +194,15 @@ class MQTTFlow:
                 self.logger.debug(
                     f"Client {client_name} Outgoing Message : {message['topic']} -> {message['payload']}"
                 )
-                client.publish(
+                msg_info = client.publish(
                     message["topic"],
                     message["payload"],
                     *message.get("args", []),
                     **message.get("kwargs", {}),
                 )
 
+                if msg_info is not None:
+                    msg_info.wait_for_publish()
                 # time.sleep(self.PUBLISH_DELAY_IN_SECONDS)
             except Exception:
                 self.logger.exception(
