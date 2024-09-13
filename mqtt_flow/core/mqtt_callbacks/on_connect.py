@@ -1,4 +1,5 @@
 from mqtt_flow.utils.helpers import get_logger
+import sys
 
 
 class OnConnectCallback:
@@ -26,6 +27,13 @@ class OnConnectCallback:
                 flags: Response flags sent by the broker.
                 rc: The connection result.
             """
+
+            if client.first_time_connected and client.exit_on_reconnect:
+                client.disconnect()
+                client.loop_stop()
+                sys.exit(0)
+
+            client.first_time_connected = True
 
             logger.info(
                 f"MQTT client {client._client_id} connected with result code {rc}"

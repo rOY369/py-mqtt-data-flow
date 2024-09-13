@@ -95,6 +95,7 @@ class MQTTClient:
         on_connect=Mock(),
         on_message=Mock(),
         on_disconnect=Mock(),
+        exit_on_reconnect=False,
         on_log_callback_enable=False,
         persistence=None,
     ):
@@ -159,6 +160,7 @@ class MQTTClient:
         self.persistence = persistence if persistence else MockPersistence()
         self.on_log_callback_enable = on_log_callback_enable
         self.started = False
+        self.exit_on_reconnect = exit_on_reconnect
         self.log.info(
             f"Initialising client with name: {client_name} id : {client_id} on {server}:{port} with keepalive={keep_alive} and clean session={clean_session}"
         )
@@ -201,6 +203,7 @@ class MQTTClient:
             self._publish_queue()
             self.log.info("Disconnecting MQTT client")
             self.client.disconnect()
+            self.client.loop_stop()
             self.started = False
 
     @retry(
@@ -237,6 +240,8 @@ class MQTTClient:
             userdata=self.userdata,
             clean_session=self.clean_session,
         )
+        self.client.first_time_connected = False
+        self.client.exit_on_reconnect = self.exit_on_reconnect
         if self.ssl_config:
             ssl_context = self._prepare_ssl_context(
                 self.ssl_config.get("alpn_protocol"),

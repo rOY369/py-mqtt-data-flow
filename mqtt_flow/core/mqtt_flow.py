@@ -107,6 +107,7 @@ class MQTTFlow:
             "on_log_callback_enable": client_config.get(
                 "on_log_callback_enable"
             ),
+            "exit_on_reconnect": client_config.get("exit_on_reconnect"),
         }
 
         persistence = client_config.get("persistence")
