@@ -156,6 +156,9 @@ class MQTTClient:
         self._batch_lock = threading.Lock()
         self.persistence = persistence if persistence else MockPersistence()
         self.started = False
+        self.log.info(
+            f"Initialising client with name: {client_name} id : {client_id} on {server}:{port} with keepalive={keep_alive} and clean session={clean_session}"
+        )
 
     def _publish_after_interval(self):
         """Publishes from queue and batch at fixed intervals."""
