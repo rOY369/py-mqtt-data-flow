@@ -1,5 +1,5 @@
 from mqtt_flow.utils.helpers import get_logger
-import sys
+import os
 
 
 class OnConnectCallback:
@@ -31,7 +31,7 @@ class OnConnectCallback:
             if client.first_time_connected and client.exit_on_reconnect:
                 client.disconnect()
                 client.loop_stop()
-                sys.exit(0)
+                os._exit(0)
 
             client.first_time_connected = True
 
