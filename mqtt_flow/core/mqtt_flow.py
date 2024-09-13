@@ -103,6 +103,7 @@ class MQTTFlow:
             "publish_interval": client_config.get("publish_interval"),
             "ssl_config": client_config.get("ssl_config"),
             "userdata": client_config.get("userdata"),
+            "clean_session": client_config.get("clean_session"),
         }
 
         persistence = client_config.get("persistence")
