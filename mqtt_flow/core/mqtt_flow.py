@@ -121,7 +121,7 @@ class MQTTFlow:
             **{
                 attr: value
                 for attr, value in client_attributes.items()
-                if value
+                if value is not None
             },
             on_connect=OnConnectCallback.get_callback(
                 client_config.get("sub_topics")
