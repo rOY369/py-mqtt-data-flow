@@ -104,6 +104,9 @@ class MQTTFlow:
             "ssl_config": client_config.get("ssl_config"),
             "userdata": client_config.get("userdata"),
             "clean_session": client_config.get("clean_session"),
+            "on_log_callback_enable": client_config.get(
+                "on_log_callback_enable"
+            ),
         }
 
         persistence = client_config.get("persistence")

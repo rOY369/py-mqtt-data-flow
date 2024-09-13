@@ -21,6 +21,7 @@ import threading
 from queue import Queue
 import json
 from unittest.mock import Mock
+from mqtt_flow.core.mqtt_callbacks.on_log import on_log
 
 from mqtt_flow.utils.helpers import get_logger
 from mqtt_flow.peristence import MockPersistence
@@ -94,6 +95,7 @@ class MQTTClient:
         on_connect=Mock(),
         on_message=Mock(),
         on_disconnect=Mock(),
+        on_log_callback_enable=False,
         persistence=None,
     ):
         """
@@ -155,6 +157,7 @@ class MQTTClient:
         self.queue = Queue(maxsize=self.queue_size)
         self._batch_lock = threading.Lock()
         self.persistence = persistence if persistence else MockPersistence()
+        self.on_log_callback_enable = on_log_callback_enable
         self.started = False
         self.log.info(
             f"Initialising client with name: {client_name} id : {client_id} on {server}:{port} with keepalive={keep_alive} and clean session={clean_session}"
@@ -250,6 +253,8 @@ class MQTTClient:
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
         self.client.on_disconnect = self.on_disconnect
+        if self.on_log_callback_enable:
+            self.client.on_log = on_log
         try:
             self.client.connect(self.server, self.port, self.keepalive)
         except (ConnectionRefusedError, OSError):
