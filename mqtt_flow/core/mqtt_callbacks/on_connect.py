@@ -31,6 +31,9 @@ class OnConnectCallback:
             if client.first_time_connected and client.exit_on_reconnect:
                 client.disconnect()
                 client.loop_stop()
+                logger.info(
+                    f"MQTT client {client._client_id} reconnected..exiting for clean start"
+                )
                 os._exit(0)
 
             client.first_time_connected = True
