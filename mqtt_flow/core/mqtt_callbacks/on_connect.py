@@ -26,7 +26,11 @@ class OnConnectCallback:
                 flags: Response flags sent by the broker.
                 rc: The connection result.
             """
-            client.reinitialise()
+            client.reinitialise(
+                client_id=client._client_id,
+                userdata=userdata,
+                clean_session=client._clean_session,
+            )
             logger.info(
                 f"MQTT client {client._client_id} connected with result code {rc}"
             )
