@@ -203,6 +203,14 @@ class MQTTFlow:
                     *message.get("args", []),
                     **message.get("kwargs", {}),
                 )
+                if msg_info is None:
+                    self.logger.warning(
+                        f"Failed to publish message to topic: {message['topic']}"
+                    )
+                else:
+                    self.logger.debug(
+                        f"Message sent to topic : {message['topic']} with rc: {msg_info.rc}"
+                    )
 
                 # if msg_info is not None:
                 #     if msg_info.rc != 0:
