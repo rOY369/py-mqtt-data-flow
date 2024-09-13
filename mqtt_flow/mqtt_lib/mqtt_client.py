@@ -230,6 +230,7 @@ class MQTTClient:
     def _mqtt_worker(self):
         """Configures and starts the MQTT client."""
         self.client = mqtt.Client(
+            mqtt.CallbackAPIVersion.VERSION1,
             client_id=self.client_id,
             userdata=self.userdata,
             clean_session=self.clean_session,
