@@ -88,6 +88,7 @@ class MQTTClient:
         queue_size=5,
         batch_size=5,
         publish_interval=60,
+        clean_session=False,
         ssl_config=None,
         userdata=None,
         on_connect=Mock(),
@@ -149,6 +150,7 @@ class MQTTClient:
         self.on_connect = on_connect
         self.on_message = on_message
         self.on_disconnect = on_disconnect
+        self.clean_session = clean_session
         self.batches = {}
         self.queue = Queue(maxsize=self.queue_size)
         self._batch_lock = threading.Lock()
@@ -225,7 +227,9 @@ class MQTTClient:
     def _mqtt_worker(self):
         """Configures and starts the MQTT client."""
         self.client = mqtt.Client(
-            client_id=self.client_id, userdata=self.userdata
+            client_id=self.client_id,
+            userdata=self.userdata,
+            clean_session=self.clean_session,
         )
         if self.ssl_config:
             ssl_context = self._prepare_ssl_context(
