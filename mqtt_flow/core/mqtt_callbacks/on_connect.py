@@ -26,6 +26,7 @@ class OnConnectCallback:
                 flags: Response flags sent by the broker.
                 rc: The connection result.
             """
+            client.reinitialise()
             logger.info(
                 f"MQTT client {client._client_id} connected with result code {rc}"
             )
@@ -34,6 +35,5 @@ class OnConnectCallback:
             )
             for topic in sub_topics:
                 client.subscribe(topic)
-
 
         return on_connect
