@@ -35,4 +35,7 @@ class OnConnectCallback:
             for topic in sub_topics:
                 client.subscribe(topic)
 
+            client.loop_stop()
+            client.loop_start()
+
         return on_connect
