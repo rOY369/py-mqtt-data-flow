@@ -202,7 +202,10 @@ class MQTTFlow:
                 )
 
                 if msg_info is not None:
-                    msg_info.wait_for_publish()
+                    if msg_info.rc != 0:
+                        self.logger.warning(
+                            f"Failed to publish message to {client_name}: {msg_info.rc}"
+                        )
                 # time.sleep(self.PUBLISH_DELAY_IN_SECONDS)
             except Exception:
                 self.logger.exception(
