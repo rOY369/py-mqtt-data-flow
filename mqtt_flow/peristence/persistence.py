@@ -27,7 +27,7 @@ class MockPersistence:
 
 
 class Persistence:
-    DEFAULT_UPLOAD_INTERVAL = 2
+    DEFAULT_UPLOAD_INTERVAL = 5
     DEFAULT_INIT_RETRY_CONFIG = {
         "tries": 3,
         "delay": 1,
@@ -160,7 +160,9 @@ class Persistence:
         except persistqueue.exceptions.Empty:
             self.logger.debug(f"persist_queue_empty for {self.name}")
         else:
-            self.logger.info(f"persist_queue_upload_try for {self.name}")
+            self.logger.info(
+                f"persist_queue_upload_try for {self.name}"
+            )
 
             try:
                 batch_to_upload = json.loads(batch)
