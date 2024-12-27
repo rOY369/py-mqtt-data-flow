@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="mqtt_flow",
-    version="1.1.4",
+    version="1.1.5",
     author="Dishant Arora",
     author_email="dishant.arora1996@gmail.com",
     description="A scalable & modular framework for MQTT message processing in Python.",
