@@ -21,7 +21,7 @@ import time
 
 
 class MQTTFlow:
-    PUBLISH_DELAY_IN_SECONDS = 0.01
+    PUBLISH_DELAY_IN_SECONDS = 0.02
 
     def __init__(self, config):
 
