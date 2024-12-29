@@ -9,7 +9,7 @@ import time
 
 
 class TasksExecutor:
-    DEFAULT_EXECUTION_RATE_LIMIT_PER_SECOND = 10
+    DEFAULT_EXECUTION_RATE_LIMIT_PER_SECOND = 1000
     POOL_TYPES = {
         "simple_thread": SimpleThreadPool,
         "thread": ThreadPool,
@@ -64,7 +64,8 @@ class TasksExecutor:
                     pool_name = queue_config.get("pool")
                     pool = self._pools[pool_name]
                     execution_rate_limit_per_second = queue_config.get(
-                        "execution_rate_limit_per_second", 0
+                        "execution_rate_limit_per_second",
+                        self.DEFAULT_EXECUTION_RATE_LIMIT_PER_SECOND,
                     )
                     break
 
