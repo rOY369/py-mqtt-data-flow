@@ -214,7 +214,7 @@ class MQTTFlow:
                         self.logger.warning(
                             f"Failed to publish message to {client_name}: {msg_info.rc}"
                         )
-                time.sleep(self.PUBLISH_DELAY_IN_SECONDS)
+                # time.sleep(self.PUBLISH_DELAY_IN_SECONDS)
             except Exception:
                 self.logger.exception(
                     "Exception in Outgoing Message Queue Consumer"
