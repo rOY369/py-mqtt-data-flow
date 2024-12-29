@@ -64,8 +64,7 @@ class TasksExecutor:
                     pool_name = queue_config.get("pool")
                     pool = self._pools[pool_name]
                     execution_rate_limit_per_second = queue_config.get(
-                        "execution_rate_limit_per_second",
-                        self.DEFAULT_EXECUTION_RATE_LIMIT_PER_SECOND,
+                        "execution_rate_limit_per_second", 0
                     )
                     break
 
