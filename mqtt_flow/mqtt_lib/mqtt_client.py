@@ -251,20 +251,20 @@ class MQTTClient:
         self.client.first_time_connected = False
         self.client.exit_on_reconnect = self.exit_on_reconnect
         if self.ssl_config:
-            # ssl_context = self._prepare_ssl_context(
-            #     self.ssl_config.get("alpn_protocol"),
-            #     self.ssl_config.get("ca"),
-            #     self.ssl_config.get("cert"),
-            #     self.ssl_config.get("key"),
-            # )
-            # self.client.tls_set_context(context=ssl_context)
-            self.client.tls_set(
-                ca_certs=self.ssl_config.get("ca"),
-                certfile=self.ssl_config.get("cert"),
-                keyfile=self.ssl_config.get("key"),
-                alpn_protocols=[self.ssl_config.get("alpn_protocol")],
-                tls_version=ssl.TLSVersion.TLSv1_3,
+            ssl_context = self._prepare_ssl_context(
+                self.ssl_config.get("alpn_protocol"),
+                self.ssl_config.get("ca"),
+                self.ssl_config.get("cert"),
+                self.ssl_config.get("key"),
             )
+            self.client.tls_set_context(context=ssl_context)
+            # self.client.tls_set(
+            #     ca_certs=self.ssl_config.get("ca"),
+            #     certfile=self.ssl_config.get("cert"),
+            #     keyfile=self.ssl_config.get("key"),
+            #     alpn_protocols=[self.ssl_config.get("alpn_protocol")],
+            #     tls_version=ssl.TLSVersion.TLSv1_3,
+            # )
         if self.will_topic and self.will_payload:
             self.client.will_set(self.will_topic, self.will_payload)
         self.client.reconnect_delay_set(min_delay=1, max_delay=self.max_reconnect_delay)
