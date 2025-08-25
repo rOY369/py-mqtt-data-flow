@@ -259,10 +259,10 @@ class MQTTClient:
             )
             # self.client.tls_set_context(context=ssl_context)
             self.client.tls_set(
-                ca_certs=ssl_context.cafile,
-                certfile=ssl_context.certfile,
-                keyfile=ssl_context.keyfile,
-                alpn_protocol=ssl_context.alpn_protocol,
+                ca_certs=self.ssl_config.get("ca"),
+                certfile=self.ssl_config.get("cert"),
+                keyfile=self.ssl_config.get("key"),
+                alpn_protocol=self.ssl_config.get("alpn_protocol"),
                 tls_version=ssl.TLSVersion.TLSv1_3,
             )
         if self.will_topic and self.will_payload:
