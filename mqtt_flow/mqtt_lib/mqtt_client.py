@@ -262,7 +262,7 @@ class MQTTClient:
                 ca_certs=self.ssl_config.get("ca"),
                 certfile=self.ssl_config.get("cert"),
                 keyfile=self.ssl_config.get("key"),
-                alpn_protocol=self.ssl_config.get("alpn_protocol"),
+                alpn_protocols=[self.ssl_config.get("alpn_protocol")],
                 tls_version=ssl.TLSVersion.TLSv1_3,
             )
         if self.will_topic and self.will_payload:
