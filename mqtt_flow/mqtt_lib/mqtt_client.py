@@ -223,6 +223,13 @@ class MQTTClient:
     def _prepare_ssl_context(self, alpn_protocol, ca, cert, key):
         """Sets up SSL context with ALPN for AWS IoT connection."""
         ssl_context = ssl.create_default_context()
+        try:
+            ssl_context.minimum_version = ssl.TLSVersion.TLSv1_2
+            ssl_context.maximum_version = ssl.TLSVersion.TLSv1_3
+        except AttributeError:
+            # Very old Python/OpenSSL fallback
+            ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+
         if alpn_protocol:
             ssl_context.set_alpn_protocols([alpn_protocol])
 
