@@ -215,20 +215,21 @@ class MQTTClient:
     def _retry_connection(self):
         """Retries MQTT connection with exponential backoff."""
         if self.started:
-            self.log.info(
-                f"Retrying MQTT connection to {self.server}:{self.port}"
-            )
+            self.log.info(f"Retrying MQTT connection to {self.server}:{self.port}")
             self.client.reconnect()
 
     def _prepare_ssl_context(self, alpn_protocol, ca, cert, key):
         """Sets up SSL context with ALPN for AWS IoT connection."""
-        ssl_context = ssl.create_default_context()
-        try:
-            ssl_context.minimum_version = ssl.TLSVersion.TLSv1_2
-            ssl_context.maximum_version = ssl.TLSVersion.TLSv1_3
-        except AttributeError:
-            # Very old Python/OpenSSL fallback
-            ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+        # ssl_context = ssl.create_default_context()
+        ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_3)
+
+        # try:
+        #     ssl_context.minimum_version = ssl.TLSVersion.TLSv1_2
+        #     ssl_context.maximum_version = ssl.TLSVersion.TLSv1_3
+        # except AttributeError as e:
+        #     # Very old Python/OpenSSL fallback
+        #     self.log.warning(f"Using old Python/OpenSSL fallback : {e}")
+        #     ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
 
         if alpn_protocol:
             ssl_context.set_alpn_protocols([alpn_protocol])
@@ -259,9 +260,7 @@ class MQTTClient:
             self.client.tls_set_context(context=ssl_context)
         if self.will_topic and self.will_payload:
             self.client.will_set(self.will_topic, self.will_payload)
-        self.client.reconnect_delay_set(
-            min_delay=1, max_delay=self.max_reconnect_delay
-        )
+        self.client.reconnect_delay_set(min_delay=1, max_delay=self.max_reconnect_delay)
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
         self.client.on_disconnect = self.on_disconnect
@@ -307,9 +306,7 @@ class MQTTClient:
             return None
 
         if self.persistence and persist and not self.is_connected():
-            self.persistence.append_to_batch(
-                {"topic": topic, "payload": payload}
-            )
+            self.persistence.append_to_batch({"topic": topic, "payload": payload})
             return None
 
         if self.is_connected():
