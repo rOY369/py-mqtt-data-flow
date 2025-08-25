@@ -257,8 +257,14 @@ class MQTTClient:
                 self.ssl_config.get("cert"),
                 self.ssl_config.get("key"),
             )
-            self.client.tls_set_context(context=ssl_context)
-            self.client.tls_set(ssl.TLSVersion.TLSv1_3)
+            # self.client.tls_set_context(context=ssl_context)
+            self.client.tls_set(
+                ca_certs=ssl_context.cafile,
+                certfile=ssl_context.certfile,
+                keyfile=ssl_context.keyfile,
+                alpn_protocol=ssl_context.alpn_protocol,
+                tls_version=ssl.TLSVersion.TLSv1_3,
+            )
         if self.will_topic and self.will_payload:
             self.client.will_set(self.will_topic, self.will_payload)
         self.client.reconnect_delay_set(min_delay=1, max_delay=self.max_reconnect_delay)
